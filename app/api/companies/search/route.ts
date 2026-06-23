@@ -1,27 +1,33 @@
 import { supabase } from "@/lib/supabase";
 import { NextResponse } from "next/server";
 
+type CompanySearchRow = {
+  id: string;
+  name: string;
+  slug: string;
+  address: string | null;
+  postal_code: string | null;
+  city: string | null;
+};
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const query = url.searchParams.get("q")?.trim() ?? "";
-  const city = url.searchParams.get("city")?.trim() ?? "";
 
   if (query.length < 2) {
     return NextResponse.json({ success: true, companies: [] });
   }
 
-  let requestBuilder = supabase
+  const searchParts = query
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  const { data, error } = await supabase
     .from("companies")
-    .select("id, name, slug, city")
-    .ilike("name", `%${query}%`)
+    .select("id, name, slug, address, postal_code, city")
     .order("name", { ascending: true })
-    .limit(6);
-
-  if (city) {
-    requestBuilder = requestBuilder.ilike("city", `%${city}%`);
-  }
-
-  const { data, error } = await requestBuilder;
+    .limit(100);
 
   if (error) {
     return NextResponse.json(
@@ -30,5 +36,21 @@ export async function GET(request: Request) {
     );
   }
 
-  return NextResponse.json({ success: true, companies: data ?? [] });
+  const companies = ((data as CompanySearchRow[] | null) ?? [])
+    .filter((company) => {
+      const searchableText = [
+        company.name,
+        company.address,
+        company.postal_code,
+        company.city,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return searchParts.every((part) => searchableText.includes(part));
+    })
+    .slice(0, 6);
+
+  return NextResponse.json({ success: true, companies });
 }

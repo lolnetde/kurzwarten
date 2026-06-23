@@ -23,7 +23,7 @@ export async function POST(_request: Request, { params }: RouteParams) {
 
   const { data: companyData, error: companyError } = await supabase
     .from("companies")
-    .select("id, name, slug")
+    .select("id, name, slug, address, postal_code, city")
     .eq("slug", slug)
     .limit(1)
     .maybeSingle();

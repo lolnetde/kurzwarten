@@ -8,6 +8,8 @@ type Company = {
   id: string;
   name: string;
   slug: string;
+  address: string | null;
+  postal_code: string | null;
   city: string | null;
 };
 
@@ -45,6 +47,8 @@ export default function CompanyAdminPage() {
   const [isCreatingTicket, setIsCreatingTicket] = useState(false);
   const [loadingTicketId, setLoadingTicketId] = useState<number | null>(null);
   const [newTicketNumber, setNewTicketNumber] = useState<number | null>(null);
+  const [address, setAddress] = useState("");
+  const [postalCode, setPostalCode] = useState("");
   const [city, setCity] = useState("");
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [queueUrl, setQueueUrl] = useState("");
@@ -63,6 +67,8 @@ export default function CompanyAdminPage() {
 
       if (data.success) {
         setCompany(data.company);
+        setAddress(data.company.address ?? "");
+        setPostalCode(data.company.postal_code ?? "");
         setCity(data.company.city ?? "");
         setTickets(data.tickets ?? []);
       } else {
@@ -103,6 +109,8 @@ export default function CompanyAdminPage() {
 
         if (data.success) {
           setCompany(data.company);
+          setAddress(data.company.address ?? "");
+          setPostalCode(data.company.postal_code ?? "");
           setCity(data.company.city ?? "");
         } else {
           setMessage(data.error ?? "Unternehmen wurde nicht gefunden.");
@@ -192,13 +200,19 @@ export default function CompanyAdminPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ city }),
+        body: JSON.stringify({
+          address,
+          postal_code: postalCode,
+          city,
+        }),
       });
 
       const data = await response.json();
 
       if (data.success) {
         setCompany(data.company);
+        setAddress(data.company.address ?? "");
+        setPostalCode(data.company.postal_code ?? "");
         setCity(data.company.city ?? "");
         setMessage("Einstellungen gespeichert.");
       } else {
@@ -450,20 +464,49 @@ export default function CompanyAdminPage() {
           <p className="text-sm font-semibold text-blue-700">Einstellungen</p>
           <h2 className="mt-1 text-xl font-bold">Praxisdaten</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Die Stadt ist optional. Wenn sie ausgefüllt ist, hilft sie Patienten
-            bei der erweiterten Suche.
+            Diese Angaben sind optional. Wenn sie ausgefüllt sind, finden
+            Patienten die richtige Praxis über Name, Straße, PLZ oder Stadt.
           </p>
 
-          <label className="mt-4 block text-sm font-semibold text-slate-700">
-            Stadt oder Ort
-          </label>
-          <div className="mt-2 grid gap-3 sm:grid-cols-[1fr_auto]">
-            <input
-              value={city}
-              onChange={(event) => setCity(event.target.value)}
-              className="h-12 rounded-lg border border-slate-300 bg-white px-4 text-slate-950"
-              placeholder="z. B. Köln"
-            />
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700">
+                Straße und Hausnummer
+              </label>
+              <input
+                value={address}
+                onChange={(event) => setAddress(event.target.value)}
+                className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-slate-950"
+                placeholder="z. B. Musterstraße 12"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-700">
+                Postleitzahl
+              </label>
+              <input
+                value={postalCode}
+                onChange={(event) => setPostalCode(event.target.value)}
+                className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-slate-950"
+                placeholder="z. B. 50667"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-700">
+                Stadt oder Ort
+              </label>
+              <input
+                value={city}
+                onChange={(event) => setCity(event.target.value)}
+                className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-slate-950"
+                placeholder="z. B. Köln"
+              />
+            </div>
+          </div>
+
+          <div className="mt-4">
             <button
               onClick={saveSettings}
               disabled={isSavingSettings}

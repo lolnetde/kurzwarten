@@ -8,20 +8,25 @@ type CompanySuggestion = {
   id: string;
   name: string;
   slug: string;
+  address: string | null;
+  postal_code: string | null;
   city: string | null;
 };
 
+function formatCompanyLocation(company: CompanySuggestion) {
+  return [company.address, company.postal_code, company.city]
+    .filter(Boolean)
+    .join(", ");
+}
+
 export default function WartenOverviewPage() {
   const [companyName, setCompanyName] = useState("");
-  const [city, setCity] = useState("");
-  const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   const [suggestions, setSuggestions] = useState<CompanySuggestion[]>([]);
   const [message, setMessage] = useState("");
   const [isOpening, setIsOpening] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
 
   const trimmedCompanyName = companyName.trim();
-  const trimmedCity = city.trim();
   const canOpenCompany = trimmedCompanyName.length > 0 && !isOpening;
 
   const handleQrResult = useCallback((value: string) => {
@@ -53,10 +58,6 @@ export default function WartenOverviewPage() {
 
       const params = new URLSearchParams({ q: trimmedCompanyName });
 
-      if (showAdvancedSearch && trimmedCity) {
-        params.set("city", trimmedCity);
-      }
-
       try {
         const response = await fetch(`/api/companies/search?${params.toString()}`);
         const data = await response.json();
@@ -70,7 +71,7 @@ export default function WartenOverviewPage() {
     }, 250);
 
     return () => window.clearTimeout(timeout);
-  }, [showAdvancedSearch, trimmedCity, trimmedCompanyName]);
+  }, [trimmedCompanyName]);
 
   async function openCompanyQueue() {
     setMessage("");
@@ -120,7 +121,8 @@ export default function WartenOverviewPage() {
             Warteschlange finden
           </h1>
           <p className="mt-4 text-lg leading-8 text-slate-600">
-            Gib den Namen der Praxis ein oder scanne den QR-Code am Empfang.
+            Scanne den QR-Code am Empfang oder suche nach Praxisname, Adresse,
+            Postleitzahl oder Stadt.
           </p>
 
           <button
@@ -137,7 +139,7 @@ export default function WartenOverviewPage() {
           </div>
 
           <label className="block text-sm font-semibold text-slate-700">
-            Name der Praxis oder des Unternehmens
+            Suche
           </label>
           <input
             value={companyName}
@@ -146,46 +148,33 @@ export default function WartenOverviewPage() {
               setMessage("");
             }}
             className="mt-2 h-14 w-full rounded-lg border border-slate-300 bg-white px-4 text-lg text-slate-950"
-            placeholder="z. B. Hausarzt Jo"
+            placeholder="z. B. Köln Hausarzt Jo oder 50667"
           />
 
           {suggestions.length > 0 && (
             <div className="mt-2 overflow-hidden rounded-lg border border-slate-200 bg-white">
-              {suggestions.map((company) => (
-                <button
-                  key={company.id}
-                  onClick={() => {
-                    window.location.href = `/warten/${company.slug}`;
-                  }}
-                  className="block w-full border-b border-slate-100 px-4 py-3 text-left last:border-b-0 hover:bg-blue-50"
-                >
-                  <span className="font-semibold text-slate-950">{company.name}</span>
-                  {company.city && (
-                    <span className="ml-2 text-sm text-slate-500">{company.city}</span>
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
+              {suggestions.map((company) => {
+                const location = formatCompanyLocation(company);
 
-          <button
-            onClick={() => setShowAdvancedSearch((value) => !value)}
-            className="mt-4 rounded-lg border border-slate-300 bg-white px-4 py-2 font-semibold text-slate-800 hover:bg-slate-50"
-          >
-            {showAdvancedSearch ? "Erweiterte Suche ausblenden" : "Erweiterte Suche"}
-          </button>
-
-          {showAdvancedSearch && (
-            <div className="mt-4 rounded-lg bg-slate-50 p-4">
-              <label className="block text-sm font-semibold text-slate-700">
-                Stadt oder Ort
-              </label>
-              <input
-                value={city}
-                onChange={(event) => setCity(event.target.value)}
-                className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-slate-950"
-                placeholder="z. B. Köln"
-              />
+                return (
+                  <button
+                    key={company.id}
+                    onClick={() => {
+                      window.location.href = `/warten/${company.slug}`;
+                    }}
+                    className="block w-full border-b border-slate-100 px-4 py-3 text-left last:border-b-0 hover:bg-blue-50"
+                  >
+                    <span className="block font-semibold text-slate-950">
+                      {company.name}
+                    </span>
+                    {location && (
+                      <span className="mt-1 block text-sm text-slate-500">
+                        {location}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           )}
 
