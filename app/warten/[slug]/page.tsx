@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
 type Company = {
@@ -19,6 +19,10 @@ type TicketInfo = {
 
 const MAX_NAME_LENGTH = 60;
 
+function getSavedTicketKey(slug: string) {
+  return `kurzwarten-ticket-${slug}`;
+}
+
 export default function CompanyWartenPage() {
   const params = useParams<{ slug: string }>();
   const slug = params.slug;
@@ -35,6 +39,31 @@ export default function CompanyWartenPage() {
   const canCreateTicket =
     trimmedName.length > 0 && !isNameTooLong && !isCreating && !!company;
 
+  const loadTicketStatus = useCallback(async (ticketId: number) => {
+    try {
+      const response = await fetch(`/api/company/${slug}/ticket/${ticketId}`);
+      const data = await response.json();
+
+      if (data.success) {
+        setTicket(data.ticket);
+        setCompany(data.company);
+        setMessage("");
+
+        if (data.ticket.status === "done") {
+          window.localStorage.removeItem(getSavedTicketKey(slug));
+        }
+
+        return;
+      }
+
+      window.localStorage.removeItem(getSavedTicketKey(slug));
+      setTicket(null);
+      setMessage(data.error ?? "Ticket wurde nicht gefunden.");
+    } catch {
+      setMessage("Live-Status konnte gerade nicht aktualisiert werden.");
+    }
+  }, [slug]);
+
   useEffect(() => {
     const timeout = window.setTimeout(async () => {
       try {
@@ -43,6 +72,14 @@ export default function CompanyWartenPage() {
 
         if (data.success) {
           setCompany(data.company);
+
+          const savedTicketId = window.localStorage.getItem(
+            getSavedTicketKey(slug)
+          );
+
+          if (savedTicketId) {
+            await loadTicketStatus(Number(savedTicketId));
+          }
         } else {
           setMessage(data.error ?? "Diese Warteschlange wurde nicht gefunden.");
         }
@@ -54,7 +91,7 @@ export default function CompanyWartenPage() {
     }, 0);
 
     return () => window.clearTimeout(timeout);
-  }, [slug]);
+  }, [loadTicketStatus, slug]);
 
   async function createTicket() {
     setMessage("");
@@ -85,6 +122,10 @@ export default function CompanyWartenPage() {
       if (data.success) {
         setTicket(data.ticket);
         setCompany(data.company);
+        window.localStorage.setItem(
+          getSavedTicketKey(slug),
+          String(data.ticket.id)
+        );
         setName("");
       } else {
         setMessage(data.error ?? "Ticket konnte nicht erstellt werden.");
@@ -101,27 +142,12 @@ export default function CompanyWartenPage() {
 
     const ticketId = ticket.id;
 
-    async function refreshTicketStatus() {
-      try {
-        const response = await fetch(`/api/company/${slug}/ticket/${ticketId}`);
-        const data = await response.json();
-
-        if (data.success) {
-          setTicket(data.ticket);
-          setCompany(data.company);
-          setMessage("");
-        } else {
-          setMessage(data.error ?? "Ticket wurde nicht gefunden.");
-        }
-      } catch {
-        setMessage("Live-Status konnte gerade nicht aktualisiert werden.");
-      }
-    }
-
-    const interval = window.setInterval(refreshTicketStatus, 3000);
+    const interval = window.setInterval(() => {
+      void loadTicketStatus(ticketId);
+    }, 3000);
 
     return () => window.clearInterval(interval);
-  }, [slug, ticket?.id]);
+  }, [loadTicketStatus, ticket?.id]);
 
   return (
     <main className="min-h-[calc(100vh-73px)] bg-[#f5f7fb] text-slate-950">
