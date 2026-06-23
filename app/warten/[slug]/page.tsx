@@ -17,8 +17,6 @@ type TicketInfo = {
   estimatedMinutes: number;
 };
 
-const MAX_NAME_LENGTH = 60;
-
 function getSavedTicketKey(slug: string) {
   return `kurzwarten-ticket-${slug}`;
 }
@@ -28,16 +26,16 @@ export default function CompanyWartenPage() {
   const slug = params.slug;
 
   const [company, setCompany] = useState<Company | null>(null);
-  const [name, setName] = useState("");
+  const [ticketNumber, setTicketNumber] = useState("");
   const [ticket, setTicket] = useState<TicketInfo | null>(null);
   const [message, setMessage] = useState("");
   const [isLoadingCompany, setIsLoadingCompany] = useState(true);
-  const [isCreating, setIsCreating] = useState(false);
+  const [isLoadingTicket, setIsLoadingTicket] = useState(false);
 
-  const trimmedName = name.trim();
-  const isNameTooLong = trimmedName.length > MAX_NAME_LENGTH;
-  const canCreateTicket =
-    trimmedName.length > 0 && !isNameTooLong && !isCreating && !!company;
+  const trimmedTicketNumber = ticketNumber.trim();
+  const parsedTicketNumber = Number(trimmedTicketNumber);
+  const canOpenTicket =
+    Number.isInteger(parsedTicketNumber) && parsedTicketNumber > 0 && !isLoadingTicket;
 
   const loadTicketStatus = useCallback(async (ticketId: number) => {
     try {
@@ -53,14 +51,16 @@ export default function CompanyWartenPage() {
           window.localStorage.removeItem(getSavedTicketKey(slug));
         }
 
-        return;
+        return true;
       }
 
       window.localStorage.removeItem(getSavedTicketKey(slug));
       setTicket(null);
       setMessage(data.error ?? "Ticket wurde nicht gefunden.");
+      return false;
     } catch {
       setMessage("Live-Status konnte gerade nicht aktualisiert werden.");
+      return false;
     }
   }, [slug]);
 
@@ -93,48 +93,36 @@ export default function CompanyWartenPage() {
     return () => window.clearTimeout(timeout);
   }, [loadTicketStatus, slug]);
 
-  async function createTicket() {
+  async function openTicket() {
     setMessage("");
 
-    if (!trimmedName) {
-      setMessage("Bitte gib deinen Namen ein.");
+    if (!canOpenTicket) {
+      setMessage("Bitte gib deine Ticketnummer ein.");
       return;
     }
 
-    if (isNameTooLong) {
-      setMessage(`Der Name darf maximal ${MAX_NAME_LENGTH} Zeichen lang sein.`);
-      return;
-    }
-
-    setIsCreating(true);
+    setIsLoadingTicket(true);
 
     try {
-      const response = await fetch(`/api/company/${slug}/ticket`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name: trimmedName }),
-      });
+      const foundTicket = await loadTicketStatus(parsedTicketNumber);
 
-      const data = await response.json();
-
-      if (data.success) {
-        setTicket(data.ticket);
-        setCompany(data.company);
+      if (foundTicket) {
         window.localStorage.setItem(
           getSavedTicketKey(slug),
-          String(data.ticket.id)
+          String(parsedTicketNumber)
         );
-        setName("");
-      } else {
-        setMessage(data.error ?? "Ticket konnte nicht erstellt werden.");
+        setTicketNumber("");
       }
-    } catch {
-      setMessage("Verbindung fehlgeschlagen. Bitte versuche es erneut.");
     } finally {
-      setIsCreating(false);
+      setIsLoadingTicket(false);
     }
+  }
+
+  function forgetTicket() {
+    window.localStorage.removeItem(getSavedTicketKey(slug));
+    setTicket(null);
+    setTicketNumber("");
+    setMessage("");
   }
 
   useEffect(() => {
@@ -167,46 +155,33 @@ export default function CompanyWartenPage() {
             {!ticket && (
               <>
                 <h1 className="mt-2 text-4xl font-bold leading-tight">
-                  Ticket ziehen
+                  Ticketnummer eingeben
                 </h1>
                 <p className="mt-4 text-lg leading-8 text-slate-600">
-                  Gib deinen Namen ein. Danach siehst du deine Ticketnummer,
-                  deine Position und die geschätzte Wartezeit.
+                  Gib die Nummer ein, die du in der Praxis erhalten hast. Danach
+                  siehst du deine Position und den Live-Status.
                 </p>
 
                 <label className="mt-7 block text-sm font-semibold text-slate-700">
-                  Dein Name
+                  Deine Ticketnummer
                 </label>
                 <input
-                  value={name}
+                  value={ticketNumber}
                   onChange={(event) => {
-                    setName(event.target.value);
+                    setTicketNumber(event.target.value.replace(/\D/g, ""));
                     setMessage("");
                   }}
                   className="mt-2 h-14 w-full rounded-lg border border-slate-300 bg-white px-4 text-lg text-slate-950"
-                  maxLength={MAX_NAME_LENGTH}
-                  placeholder="Vorname oder Name"
+                  inputMode="numeric"
+                  placeholder="z. B. 42"
                 />
 
-                <div className="mt-2 flex items-center justify-between text-sm">
-                  <p
-                    className={
-                      isNameTooLong ? "text-red-700" : "text-slate-500"
-                    }
-                  >
-                    Maximal {MAX_NAME_LENGTH} Zeichen
-                  </p>
-                  <p className="text-slate-500">
-                    {trimmedName.length}/{MAX_NAME_LENGTH}
-                  </p>
-                </div>
-
                 <button
-                  onClick={createTicket}
-                  disabled={!canCreateTicket}
+                  onClick={openTicket}
+                  disabled={!canOpenTicket}
                   className="mt-5 h-14 w-full rounded-lg bg-blue-700 px-6 text-lg font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
                 >
-                  {isCreating ? "Ticket wird erstellt..." : "Ticket ziehen"}
+                  {isLoadingTicket ? "Ticket wird gesucht..." : "Ticket anzeigen"}
                 </button>
               </>
             )}
@@ -228,10 +203,14 @@ export default function CompanyWartenPage() {
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                     <p className="text-sm font-semibold text-slate-500">
-                      Name
+                      Status
                     </p>
                     <p className="mt-1 text-xl font-bold">
-                      {ticket.customer_name}
+                      {ticket.status === "called"
+                        ? "Aufgerufen"
+                        : ticket.status === "done"
+                          ? "Erledigt"
+                          : "Wartet"}
                     </p>
                   </div>
 
@@ -276,6 +255,13 @@ export default function CompanyWartenPage() {
                     </p>
                   </div>
                 )}
+
+                <button
+                  onClick={forgetTicket}
+                  className="mt-5 h-12 w-full rounded-lg border border-slate-300 bg-white px-6 font-semibold text-slate-800 hover:bg-slate-50"
+                >
+                  Andere Ticketnummer eingeben
+                </button>
               </>
             )}
           </div>

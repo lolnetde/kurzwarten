@@ -41,7 +41,9 @@ export default function CompanyAdminPage() {
   const [message, setMessage] = useState("");
   const [isLoadingCompany, setIsLoadingCompany] = useState(true);
   const [isLoadingTickets, setIsLoadingTickets] = useState(false);
+  const [isCreatingTicket, setIsCreatingTicket] = useState(false);
   const [loadingTicketId, setLoadingTicketId] = useState<number | null>(null);
+  const [newTicketNumber, setNewTicketNumber] = useState<number | null>(null);
   const [queueUrl, setQueueUrl] = useState("");
   const [qrCodeUrl, setQrCodeUrl] = useState("");
 
@@ -147,6 +149,31 @@ export default function CompanyAdminPage() {
       setMessage("Verbindung fehlgeschlagen. Bitte versuche es erneut.");
     } finally {
       setIsUnlocking(false);
+    }
+  }
+
+  async function createAdminTicket() {
+    setMessage("");
+    setNewTicketNumber(null);
+    setIsCreatingTicket(true);
+
+    try {
+      const response = await fetch(`/api/company/${slug}/ticket/admin`, {
+        method: "POST",
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setNewTicketNumber(data.ticket.id);
+        await loadTickets();
+      } else {
+        setMessage(data.error ?? "Ticket konnte nicht erstellt werden.");
+      }
+    } catch {
+      setMessage("Verbindung fehlgeschlagen. Ticket wurde nicht erstellt.");
+    } finally {
+      setIsCreatingTicket(false);
     }
   }
 
@@ -265,7 +292,7 @@ export default function CompanyAdminPage() {
               Warteschlange
             </h1>
             <p className="mt-2 text-slate-600">
-              Rufe Patienten oder Kunden auf und halte den Status aktuell.
+              Erstelle Ticketnummern vor Ort und rufe sie im Dashboard auf.
             </p>
           </div>
 
@@ -301,62 +328,87 @@ export default function CompanyAdminPage() {
         </div>
 
         <div className="mt-7 grid gap-5 lg:grid-cols-[320px_1fr]">
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-5 shadow-sm">
+            <p className="text-sm font-semibold text-blue-800">
+              Ausgabe am Empfang
+            </p>
+            <h2 className="mt-1 text-xl font-bold">Neues Ticket erstellen</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-700">
+              Erstelle hier eine Nummer und gib sie der Person vor Ort. Diese
+              Nummer wird später auf der Kundenseite eingegeben.
+            </p>
+            <button
+              onClick={createAdminTicket}
+              disabled={isCreatingTicket}
+              className="mt-4 h-14 w-full rounded-lg bg-blue-700 px-5 text-lg font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
+            >
+              {isCreatingTicket ? "Ticket wird erstellt..." : "Ticket erstellen"}
+            </button>
+
+            {newTicketNumber && (
+              <div className="mt-4 rounded-lg border border-blue-200 bg-white p-5 text-center">
+                <p className="text-sm font-semibold text-blue-800">
+                  Neue Ticketnummer
+                </p>
+                <p className="mt-1 text-6xl font-bold text-blue-950">
+                  #{newTicketNumber}
+                </p>
+                <p className="mt-2 text-sm text-slate-600">
+                  Diese Nummer an die Person weitergeben.
+                </p>
+              </div>
+            )}
+          </div>
+
           <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <p className="text-sm font-semibold text-blue-700">
               QR-Code für die Praxis
             </p>
             <h2 className="mt-1 text-xl font-bold">Kundenseite scannen</h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              Diesen QR-Code kannst du ausdrucken oder am Empfang zeigen.
-              Patienten gelangen direkt zur Warteschlange.
+              Patienten scannen den QR-Code und geben dort ihre Ticketnummer
+              ein. Der QR-Code führt direkt zur Warteschlange.
             </p>
 
-            <div className="mt-4 flex justify-center rounded-lg border border-slate-200 bg-white p-4">
-              {qrCodeUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={qrCodeUrl}
-                  alt={`QR-Code für ${company?.name ?? "die Kundenseite"}`}
-                  className="h-56 w-56"
-                />
-              ) : (
-                <div className="flex h-56 w-56 items-center justify-center rounded-lg bg-slate-100 text-sm text-slate-500">
-                  QR-Code wird erstellt...
+            <div className="mt-4 grid gap-5 md:grid-cols-[260px_1fr] md:items-center">
+              <div className="flex justify-center rounded-lg border border-slate-200 bg-white p-4">
+                {qrCodeUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={qrCodeUrl}
+                    alt={`QR-Code für ${company?.name ?? "die Kundenseite"}`}
+                    className="h-56 w-56"
+                  />
+                ) : (
+                  <div className="flex h-56 w-56 items-center justify-center rounded-lg bg-slate-100 text-sm text-slate-500">
+                    QR-Code wird erstellt...
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <p className="break-all rounded-lg bg-slate-50 p-4 font-mono text-sm text-slate-700">
+                  {queueUrl}
+                </p>
+                <div className="mt-4 grid gap-2">
+                  <a
+                    href={queueUrl}
+                    className="rounded-lg bg-slate-950 px-4 py-3 text-center font-semibold text-white hover:bg-slate-800"
+                  >
+                    Kundenseite öffnen
+                  </a>
+                  {qrCodeUrl && (
+                    <a
+                      href={qrCodeUrl}
+                      download={`kurzwarten-${slug}-qr-code.png`}
+                      className="rounded-lg border border-slate-300 bg-white px-4 py-3 text-center font-semibold text-slate-800 hover:bg-slate-50"
+                    >
+                      QR-Code herunterladen
+                    </a>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
-
-            <div className="mt-4 grid gap-2">
-              <a
-                href={queueUrl}
-                className="rounded-lg bg-slate-950 px-4 py-3 text-center font-semibold text-white hover:bg-slate-800"
-              >
-                Kundenseite öffnen
-              </a>
-              {qrCodeUrl && (
-                <a
-                  href={qrCodeUrl}
-                  download={`kurzwarten-${slug}-qr-code.png`}
-                  className="rounded-lg border border-slate-300 bg-white px-4 py-3 text-center font-semibold text-slate-800 hover:bg-slate-50"
-                >
-                  QR-Code herunterladen
-                </a>
-              )}
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-sm font-semibold text-slate-500">
-              Link zur Kundenseite
-            </p>
-            <p className="mt-2 break-all rounded-lg bg-slate-50 p-4 font-mono text-sm text-slate-700">
-              {queueUrl}
-            </p>
-            <p className="mt-3 leading-7 text-slate-600">
-              Für den Aushang in der Praxis: QR-Code öffnen, herunterladen und
-              in ein Dokument einfügen. Der Link führt direkt zu{" "}
-              <span className="font-semibold">/warten/{slug}</span>.
-            </p>
           </div>
         </div>
 
@@ -389,9 +441,7 @@ export default function CompanyAdminPage() {
               >
                 <div>
                   <div className="flex flex-wrap items-center gap-3">
-                    <p className="text-xl font-bold">
-                      #{ticket.id} {ticket.customer_name}
-                    </p>
+                    <p className="text-xl font-bold">Ticket #{ticket.id}</p>
                     <span
                       className={`rounded-full border px-3 py-1 text-sm font-semibold ${getStatusClass(ticket.status)}`}
                     >
@@ -399,7 +449,7 @@ export default function CompanyAdminPage() {
                     </span>
                   </div>
                   <p className="mt-1 text-sm text-slate-500">
-                    Ticket in dieser Warteschlange
+                    Nummer zur Anmeldung auf der Kundenseite
                   </p>
                 </div>
 
