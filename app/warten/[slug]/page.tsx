@@ -13,8 +13,16 @@ type TicketInfo = {
   id: number;
   customer_name: string;
   status: string;
+  doctor: {
+    id: string;
+    name: string;
+    treatment_time_min: number;
+    treatment_time_max: number;
+  } | null;
   peopleBefore: number;
   estimatedMinutes: number;
+  estimatedMinutesMin: number;
+  estimatedMinutesMax: number;
 };
 
 function getSavedTicketKey(slug: string) {
@@ -214,10 +222,21 @@ export default function CompanyWartenPage() {
                     </p>
                   </div>
 
+                  {ticket.doctor && (
+                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-sm font-semibold text-slate-500">
+                        Zugeordnet
+                      </p>
+                      <p className="mt-1 text-xl font-bold">
+                        {ticket.doctor.name}
+                      </p>
+                    </div>
+                  )}
+
                   {ticket.status === "waiting" && (
                     <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                       <p className="text-sm font-semibold text-slate-500">
-                        Vor dir
+                        Vor dir bei diesem Arzt
                       </p>
                       <p className="mt-1 text-xl font-bold">
                         {ticket.peopleBefore} Personen
@@ -232,7 +251,9 @@ export default function CompanyWartenPage() {
                       Geschätzte Wartezeit
                     </p>
                     <p className="mt-1 text-3xl font-bold">
-                      {ticket.estimatedMinutes} Minuten
+                      {ticket.estimatedMinutesMin === ticket.estimatedMinutesMax
+                        ? `${ticket.estimatedMinutesMin} Minuten`
+                        : `${ticket.estimatedMinutesMin}-${ticket.estimatedMinutesMax} Minuten`}
                     </p>
                   </div>
                 )}

@@ -18,6 +18,15 @@ type Ticket = {
   customer_name: string;
   status: string;
   created_at: string;
+  doctor_id: string | null;
+  doctors: Doctor | null;
+};
+
+type Doctor = {
+  id: string;
+  name: string;
+  treatment_time_min: number;
+  treatment_time_max: number;
 };
 
 function getStatusLabel(status: string) {
@@ -38,6 +47,8 @@ export default function CompanyAdminPage() {
 
   const [company, setCompany] = useState<Company | null>(null);
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [selectedDoctorId, setSelectedDoctorId] = useState("");
   const [password, setPassword] = useState("");
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(false);
@@ -47,6 +58,7 @@ export default function CompanyAdminPage() {
   const [isCreatingTicket, setIsCreatingTicket] = useState(false);
   const [loadingTicketId, setLoadingTicketId] = useState<number | null>(null);
   const [newTicketNumber, setNewTicketNumber] = useState<number | null>(null);
+  const [newTicketDoctorName, setNewTicketDoctorName] = useState("");
   const [queueUrl, setQueueUrl] = useState("");
   const [qrCodeUrl, setQrCodeUrl] = useState("");
 
@@ -71,6 +83,32 @@ export default function CompanyAdminPage() {
       setMessage("Verbindung fehlgeschlagen. Tickets konnten nicht geladen werden.");
     } finally {
       setIsLoadingTickets(false);
+    }
+  }, [slug]);
+
+  const loadDoctors = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/company/${slug}/doctors`);
+      const data = await response.json();
+
+      if (data.success) {
+        const loadedDoctors = data.doctors ?? [];
+        setDoctors(loadedDoctors);
+        setSelectedDoctorId((currentDoctorId) => {
+          if (
+            currentDoctorId &&
+            loadedDoctors.some((doctor: Doctor) => doctor.id === currentDoctorId)
+          ) {
+            return currentDoctorId;
+          }
+
+          return loadedDoctors[0]?.id ?? "";
+        });
+      } else {
+        setMessage(data.error ?? "Aerzte konnten nicht geladen werden.");
+      }
+    } catch {
+      setMessage("Aerzte konnten nicht geladen werden.");
     }
   }, [slug]);
 
@@ -144,7 +182,7 @@ export default function CompanyAdminPage() {
       if (data.success) {
         setIsUnlocked(true);
         setPassword("");
-        await loadTickets();
+        await Promise.all([loadTickets(), loadDoctors()]);
       } else {
         setMessage(data.error ?? "Login fehlgeschlagen.");
       }
@@ -158,17 +196,29 @@ export default function CompanyAdminPage() {
   async function createAdminTicket() {
     setMessage("");
     setNewTicketNumber(null);
+    setNewTicketDoctorName("");
+
+    if (!selectedDoctorId) {
+      setMessage("Bitte lege in den Einstellungen mindestens einen Arzt an.");
+      return;
+    }
+
     setIsCreatingTicket(true);
 
     try {
       const response = await fetch(`/api/company/${slug}/ticket/admin`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ doctor_id: selectedDoctorId }),
       });
 
       const data = await response.json();
 
       if (data.success) {
         setNewTicketNumber(data.ticket.id);
+        setNewTicketDoctorName(data.ticket.doctor?.name ?? "");
         await loadTickets();
       } else {
         setMessage(data.error ?? "Ticket konnte nicht erstellt werden.");
@@ -346,9 +396,37 @@ export default function CompanyAdminPage() {
               Erstelle hier eine Nummer und gib sie der Person vor Ort. Diese
               Nummer wird später auf der Kundenseite eingegeben.
             </p>
+
+            <label className="mt-4 block text-sm font-semibold text-slate-700">
+              Arzt
+            </label>
+            <select
+              value={selectedDoctorId}
+              onChange={(event) => setSelectedDoctorId(event.target.value)}
+              className="mt-2 h-12 w-full rounded-lg border border-blue-200 bg-white px-4 font-semibold text-slate-950"
+            >
+              {doctors.length === 0 && (
+                <option value="">Kein Arzt angelegt</option>
+              )}
+              {doctors.map((doctor) => (
+                <option key={doctor.id} value={doctor.id}>
+                  {doctor.name}
+                </option>
+              ))}
+            </select>
+
+            {doctors.length === 0 && (
+              <a
+                href={`/admin/${slug}/settings`}
+                className="mt-3 block rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900"
+              >
+                Erst in den Einstellungen Aerzte anlegen
+              </a>
+            )}
+
             <button
               onClick={createAdminTicket}
-              disabled={isCreatingTicket}
+              disabled={isCreatingTicket || doctors.length === 0}
               className="mt-4 h-14 w-full rounded-lg bg-blue-700 px-5 text-lg font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
             >
               {isCreatingTicket ? "Ticket wird erstellt..." : "Ticket erstellen"}
@@ -365,6 +443,11 @@ export default function CompanyAdminPage() {
                 <p className="mt-2 text-sm text-slate-600">
                   Diese Nummer an die Person weitergeben.
                 </p>
+                {newTicketDoctorName && (
+                  <p className="mt-1 text-sm font-semibold text-blue-800">
+                    Zugeordnet: {newTicketDoctorName}
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -458,7 +541,9 @@ export default function CompanyAdminPage() {
                     </span>
                   </div>
                   <p className="mt-1 text-sm text-slate-500">
-                    Nummer zur Anmeldung auf der Kundenseite
+                    {ticket.doctors
+                      ? `Zugeordnet: ${ticket.doctors.name}`
+                      : "Noch keinem Arzt zugeordnet"}
                   </p>
                 </div>
 

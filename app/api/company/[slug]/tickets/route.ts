@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabaseServer } from "@/lib/supabase-server";
 import { NextResponse } from "next/server";
 
 type CompanyRow = {
@@ -19,7 +19,7 @@ type RouteParams = {
 export async function GET(_request: Request, { params }: RouteParams) {
   const { slug } = await params;
 
-  const { data: companyData, error: companyError } = await supabase
+  const { data: companyData, error: companyError } = await supabaseServer
     .from("companies")
     .select("id, name, slug, address, postal_code, city")
     .eq("slug", slug)
@@ -35,9 +35,11 @@ export async function GET(_request: Request, { params }: RouteParams) {
     );
   }
 
-  const { data: tickets, error } = await supabase
+  const { data: tickets, error } = await supabaseServer
     .from("tickets")
-    .select("id, customer_name, status, created_at")
+    .select(
+      "id, customer_name, status, created_at, doctor_id, doctors(id, name, treatment_time_min, treatment_time_max)"
+    )
     .eq("company_id", company.id)
     .order("id", { ascending: true });
 
