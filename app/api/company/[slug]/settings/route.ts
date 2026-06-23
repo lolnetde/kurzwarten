@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { hasSupabaseServerKey, supabaseServer } from "@/lib/supabase-server";
 import { NextResponse } from "next/server";
 
 type RouteParams = {
@@ -7,9 +7,15 @@ type RouteParams = {
   }>;
 };
 
+type CompanyRow = {
+  id: string;
+  admin_password: string;
+};
+
 export async function PATCH(request: Request, { params }: RouteParams) {
   const { slug } = await params;
   let body: {
+    password?: unknown;
     address?: unknown;
     postal_code?: unknown;
     city?: unknown;
@@ -19,37 +25,99 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     body = await request.json();
   } catch {
     return NextResponse.json(
-      { success: false, error: "Ungültige Anfrage" },
+      { success: false, error: "Ungueltige Anfrage" },
       { status: 400 }
     );
   }
 
+  const password = typeof body.password === "string" ? body.password.trim() : "";
   const address = typeof body.address === "string" ? body.address.trim() : "";
   const postalCode =
     typeof body.postal_code === "string" ? body.postal_code.trim() : "";
   const city = typeof body.city === "string" ? body.city.trim() : "";
 
-  const { data, error } = await supabase
+  if (!password) {
+    return NextResponse.json(
+      { success: false, error: "Bitte gib das Admin-Passwort ein." },
+      { status: 400 }
+    );
+  }
+
+  const { data: companyData, error: companyError } = await supabaseServer
+    .from("companies")
+    .select("id, admin_password")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  const currentCompany = companyData as CompanyRow | null;
+
+  if (companyError) {
+    return NextResponse.json(
+      { success: false, error: companyError.message },
+      { status: 500 }
+    );
+  }
+
+  if (!currentCompany) {
+    return NextResponse.json(
+      { success: false, error: "Unternehmen wurde nicht gefunden." },
+      { status: 404 }
+    );
+  }
+
+  if (currentCompany.admin_password !== password) {
+    return NextResponse.json(
+      { success: false, error: "Admin-Passwort ist falsch." },
+      { status: 401 }
+    );
+  }
+
+  const { data, error } = await supabaseServer
     .from("companies")
     .update({
       address: address || null,
       postal_code: postalCode || null,
       city: city || null,
     })
-    .eq("slug", slug)
-    .select("id, name, slug, address, postal_code, city");
+    .eq("id", currentCompany.id)
+    .select("id, name, slug, address, postal_code, city")
+    .maybeSingle();
 
-  const company = data?.[0] ?? null;
+  if (error) {
+    const lowerMessage = error.message.toLowerCase();
+    const missingColumn =
+      lowerMessage.includes("address") ||
+      lowerMessage.includes("postal_code") ||
+      lowerMessage.includes("city") ||
+      lowerMessage.includes("column");
+    const blockedByDatabase =
+      lowerMessage.includes("permission") ||
+      lowerMessage.includes("row-level security");
 
-  if (error || !company) {
     return NextResponse.json(
       {
         success: false,
-        error: error?.message ?? "Einstellungen konnten nicht gespeichert werden",
+        error: missingColumn
+          ? "In Supabase fehlen noch die Spalten address, postal_code oder city."
+          : blockedByDatabase && !hasSupabaseServerKey
+            ? "Supabase blockiert das Speichern. Lege einen Server-Key in der App an oder erlaube Updates fuer companies."
+            : error.message,
       },
       { status: 500 }
     );
   }
 
-  return NextResponse.json({ success: true, company });
+  if (!data) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: hasSupabaseServerKey
+          ? "Einstellungen konnten nicht gespeichert werden."
+          : "Supabase hat die Aenderung nicht angenommen. Wahrscheinlich fehlt der Server-Key oder eine Update-Regel.",
+      },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json({ success: true, company: data });
 }

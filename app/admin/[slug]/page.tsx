@@ -47,10 +47,6 @@ export default function CompanyAdminPage() {
   const [isCreatingTicket, setIsCreatingTicket] = useState(false);
   const [loadingTicketId, setLoadingTicketId] = useState<number | null>(null);
   const [newTicketNumber, setNewTicketNumber] = useState<number | null>(null);
-  const [address, setAddress] = useState("");
-  const [postalCode, setPostalCode] = useState("");
-  const [city, setCity] = useState("");
-  const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [queueUrl, setQueueUrl] = useState("");
   const [qrCodeUrl, setQrCodeUrl] = useState("");
 
@@ -67,9 +63,6 @@ export default function CompanyAdminPage() {
 
       if (data.success) {
         setCompany(data.company);
-        setAddress(data.company.address ?? "");
-        setPostalCode(data.company.postal_code ?? "");
-        setCity(data.company.city ?? "");
         setTickets(data.tickets ?? []);
       } else {
         setMessage(data.error ?? "Tickets konnten nicht geladen werden.");
@@ -109,9 +102,6 @@ export default function CompanyAdminPage() {
 
         if (data.success) {
           setCompany(data.company);
-          setAddress(data.company.address ?? "");
-          setPostalCode(data.company.postal_code ?? "");
-          setCity(data.company.city ?? "");
         } else {
           setMessage(data.error ?? "Unternehmen wurde nicht gefunden.");
         }
@@ -187,41 +177,6 @@ export default function CompanyAdminPage() {
       setMessage("Verbindung fehlgeschlagen. Ticket wurde nicht erstellt.");
     } finally {
       setIsCreatingTicket(false);
-    }
-  }
-
-  async function saveSettings() {
-    setMessage("");
-    setIsSavingSettings(true);
-
-    try {
-      const response = await fetch(`/api/company/${slug}/settings`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          address,
-          postal_code: postalCode,
-          city,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        setCompany(data.company);
-        setAddress(data.company.address ?? "");
-        setPostalCode(data.company.postal_code ?? "");
-        setCity(data.company.city ?? "");
-        setMessage("Einstellungen gespeichert.");
-      } else {
-        setMessage(data.error ?? "Einstellungen konnten nicht gespeichert werden.");
-      }
-    } catch {
-      setMessage("Verbindung fehlgeschlagen. Einstellungen wurden nicht gespeichert.");
-    } finally {
-      setIsSavingSettings(false);
     }
   }
 
@@ -351,6 +306,12 @@ export default function CompanyAdminPage() {
             >
               Kundenseite öffnen
             </a>
+            <a
+              href={`/admin/${slug}/settings`}
+              className="rounded-lg border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-800 hover:bg-slate-50"
+            >
+              Einstellungen
+            </a>
             <button
               onClick={loadTickets}
               className="rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white hover:bg-blue-800"
@@ -457,63 +418,6 @@ export default function CompanyAdminPage() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        <div className="mt-7 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-sm font-semibold text-blue-700">Einstellungen</p>
-          <h2 className="mt-1 text-xl font-bold">Praxisdaten</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
-            Diese Angaben sind optional. Wenn sie ausgefüllt sind, finden
-            Patienten die richtige Praxis über Name, Straße, PLZ oder Stadt.
-          </p>
-
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="block text-sm font-semibold text-slate-700">
-                Straße und Hausnummer
-              </label>
-              <input
-                value={address}
-                onChange={(event) => setAddress(event.target.value)}
-                className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-slate-950"
-                placeholder="z. B. Musterstraße 12"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-slate-700">
-                Postleitzahl
-              </label>
-              <input
-                value={postalCode}
-                onChange={(event) => setPostalCode(event.target.value)}
-                className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-slate-950"
-                placeholder="z. B. 50667"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-slate-700">
-                Stadt oder Ort
-              </label>
-              <input
-                value={city}
-                onChange={(event) => setCity(event.target.value)}
-                className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-slate-950"
-                placeholder="z. B. Köln"
-              />
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <button
-              onClick={saveSettings}
-              disabled={isSavingSettings}
-              className="h-12 rounded-lg bg-blue-700 px-5 font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
-            >
-              {isSavingSettings ? "Speichert..." : "Speichern"}
-            </button>
           </div>
         </div>
 
