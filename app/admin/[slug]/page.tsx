@@ -20,6 +20,8 @@ type Company = {
 
 type Ticket = {
   id: number;
+  ticket_number: number;
+  ticket_day: string;
   customer_name: string;
   status: string;
   created_at: string;
@@ -261,7 +263,7 @@ export default function CompanyAdminPage() {
       const data = await response.json();
 
       if (data.success) {
-        setNewTicketNumber(data.ticket.id);
+        setNewTicketNumber(data.ticket.ticket_number);
         setNewTicketDoctorName(data.ticket.doctor?.name ?? "");
         await loadTickets();
       } else {
@@ -596,7 +598,9 @@ export default function CompanyAdminPage() {
               >
                 <div>
                   <div className="flex flex-wrap items-center gap-3">
-                    <p className="text-xl font-bold">Ticket #{ticket.id}</p>
+                    <p className="text-xl font-bold">
+                      Ticket #{ticket.ticket_number}
+                    </p>
                     <span
                       className={`rounded-full border px-3 py-1 text-sm font-semibold ${getStatusClass(ticket.status)}`}
                     >

@@ -1,4 +1,5 @@
 import { supabaseServer } from "@/lib/supabase-server";
+import { getCurrentTicketDay } from "@/lib/ticket-day";
 import { NextResponse } from "next/server";
 
 type CompanyRow = {
@@ -35,13 +36,15 @@ export async function GET(_request: Request, { params }: RouteParams) {
     );
   }
 
+  const ticketDay = getCurrentTicketDay();
   const { data: tickets, error } = await supabaseServer
     .from("tickets")
     .select(
-      "id, customer_name, status, created_at, doctor_id, doctors(id, name, treatment_time_min, treatment_time_max)"
+      "id, ticket_number, ticket_day, customer_name, status, created_at, doctor_id, doctors(id, name, treatment_time_min, treatment_time_max)"
     )
     .eq("company_id", company.id)
-    .order("id", { ascending: true });
+    .eq("ticket_day", ticketDay)
+    .order("ticket_number", { ascending: true });
 
   if (error) {
     return NextResponse.json(

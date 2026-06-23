@@ -1,4 +1,5 @@
 import { supabaseServer } from "@/lib/supabase-server";
+import { getCurrentTicketDay } from "@/lib/ticket-day";
 import { NextResponse } from "next/server";
 
 type CompanyRow = {
@@ -12,6 +13,8 @@ type CompanyRow = {
 
 type TicketRow = {
   id: number;
+  ticket_number: number;
+  ticket_day: string;
   customer_name: string;
   status: string;
   doctor_id: string | null;
@@ -34,11 +37,11 @@ type RouteParams = {
 
 export async function GET(_request: Request, { params }: RouteParams) {
   const { slug, id } = await params;
-  const ticketId = Number(id);
+  const ticketNumber = Number(id);
 
-  if (!Number.isInteger(ticketId) || ticketId <= 0) {
+  if (!Number.isInteger(ticketNumber) || ticketNumber <= 0) {
     return NextResponse.json(
-      { success: false, error: "Ungültige Ticket-ID" },
+      { success: false, error: "Ungueltige Ticketnummer" },
       { status: 400 }
     );
   }
@@ -59,13 +62,15 @@ export async function GET(_request: Request, { params }: RouteParams) {
     );
   }
 
+  const ticketDay = getCurrentTicketDay();
   const { data, error } = await supabaseServer
     .from("tickets")
     .select(
-      "id, customer_name, status, doctor_id, doctors(id, name, treatment_time_min, treatment_time_max)"
+      "id, ticket_number, ticket_day, customer_name, status, doctor_id, doctors(id, name, treatment_time_min, treatment_time_max)"
     )
     .eq("company_id", company.id)
-    .eq("id", ticketId)
+    .eq("ticket_day", ticketDay)
+    .eq("ticket_number", ticketNumber)
     .single();
 
   const ticket = data as TicketRow | null;
@@ -81,8 +86,9 @@ export async function GET(_request: Request, { params }: RouteParams) {
     .from("tickets")
     .select("*", { count: "exact", head: true })
     .eq("company_id", company.id)
+    .eq("ticket_day", ticket.ticket_day)
     .eq("status", "waiting")
-    .lt("id", ticket.id);
+    .lt("ticket_number", ticket.ticket_number);
 
   waitingQuery = ticket.doctor_id
     ? waitingQuery.eq("doctor_id", ticket.doctor_id)
@@ -100,6 +106,8 @@ export async function GET(_request: Request, { params }: RouteParams) {
     company,
     ticket: {
       id: ticket.id,
+      ticket_number: ticket.ticket_number,
+      ticket_day: ticket.ticket_day,
       customer_name: ticket.customer_name,
       status: ticket.status,
       doctor: ticket.doctors,

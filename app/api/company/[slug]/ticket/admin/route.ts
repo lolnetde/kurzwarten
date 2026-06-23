@@ -1,4 +1,5 @@
 import { supabaseServer } from "@/lib/supabase-server";
+import { getCurrentTicketDay } from "@/lib/ticket-day";
 import { NextResponse } from "next/server";
 
 type CompanyRow = {
@@ -9,6 +10,8 @@ type CompanyRow = {
 
 type TicketRow = {
   id: number;
+  ticket_number: number;
+  ticket_day: string;
   customer_name: string;
   doctor_id: string | null;
 };
@@ -77,15 +80,40 @@ export async function POST(request: Request, { params }: RouteParams) {
     );
   }
 
+  const ticketDay = getCurrentTicketDay();
+  const { data: latestTicket, error: latestTicketError } = await supabaseServer
+    .from("tickets")
+    .select("ticket_number")
+    .eq("company_id", company.id)
+    .eq("ticket_day", ticketDay)
+    .order("ticket_number", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (latestTicketError) {
+    return NextResponse.json(
+      { success: false, error: latestTicketError.message },
+      { status: 500 }
+    );
+  }
+
+  const latestTicketNumber =
+    typeof latestTicket?.ticket_number === "number"
+      ? latestTicket.ticket_number
+      : 0;
+  const nextTicketNumber = latestTicketNumber + 1;
+
   const { data, error } = await supabaseServer
     .from("tickets")
     .insert({
       company_id: company.id,
       doctor_id: doctorId,
+      ticket_number: nextTicketNumber,
+      ticket_day: ticketDay,
       customer_name: "Vor Ort",
       status: "waiting",
     })
-    .select("id, customer_name, doctor_id")
+    .select("id, ticket_number, ticket_day, customer_name, doctor_id")
     .single();
 
   const ticket = data as TicketRow | null;
@@ -104,6 +132,8 @@ export async function POST(request: Request, { params }: RouteParams) {
     success: true,
     ticket: {
       id: ticket.id,
+      ticket_number: ticket.ticket_number,
+      ticket_day: ticket.ticket_day,
       customer_name: ticket.customer_name,
       doctor_id: ticket.doctor_id,
       doctor: doctorData,

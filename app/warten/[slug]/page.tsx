@@ -11,6 +11,8 @@ type Company = {
 
 type TicketInfo = {
   id: number;
+  ticket_number: number;
+  ticket_day: string;
   customer_name: string;
   status: string;
   doctor: {
@@ -134,16 +136,16 @@ export default function CompanyWartenPage() {
   }
 
   useEffect(() => {
-    if (!ticket?.id) return;
+    if (!ticket?.ticket_number) return;
 
-    const ticketId = ticket.id;
+    const ticketNumber = ticket.ticket_number;
 
     const interval = window.setInterval(() => {
-      void loadTicketStatus(ticketId);
+      void loadTicketStatus(ticketNumber);
     }, 3000);
 
     return () => window.clearInterval(interval);
-  }, [loadTicketStatus, ticket?.id]);
+  }, [loadTicketStatus, ticket?.ticket_number]);
 
   return (
     <main className="min-h-[calc(100vh-73px)] bg-[#f5f7fb] text-slate-950">
@@ -201,7 +203,7 @@ export default function CompanyWartenPage() {
                     Deine Ticketnummer
                   </p>
                   <h1 className="mt-2 text-6xl font-bold tracking-normal text-blue-950">
-                    #{ticket.id}
+                    #{ticket.ticket_number}
                   </h1>
                   <p className="mt-3 text-slate-600">
                     Die Anzeige aktualisiert sich automatisch.
