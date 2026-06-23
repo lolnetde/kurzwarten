@@ -1,5 +1,6 @@
 "use client";
 
+import QRCode from "qrcode";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
@@ -41,6 +42,8 @@ export default function CompanyAdminPage() {
   const [isLoadingCompany, setIsLoadingCompany] = useState(true);
   const [isLoadingTickets, setIsLoadingTickets] = useState(false);
   const [loadingTicketId, setLoadingTicketId] = useState<number | null>(null);
+  const [queueUrl, setQueueUrl] = useState("");
+  const [qrCodeUrl, setQrCodeUrl] = useState("");
 
   const waitingCount = tickets.filter((ticket) => ticket.status === "waiting").length;
   const calledCount = tickets.filter((ticket) => ticket.status === "called").length;
@@ -64,6 +67,26 @@ export default function CompanyAdminPage() {
     } finally {
       setIsLoadingTickets(false);
     }
+  }, [slug]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      const customerUrl = `${window.location.origin}/warten/${slug}`;
+
+      setQueueUrl(customerUrl);
+
+      void QRCode.toDataURL(customerUrl, {
+        errorCorrectionLevel: "M",
+        margin: 2,
+        scale: 8,
+        color: {
+          dark: "#0f172a",
+          light: "#ffffff",
+        },
+      }).then(setQrCodeUrl);
+    }, 0);
+
+    return () => window.clearTimeout(timeout);
   }, [slug]);
 
   useEffect(() => {
@@ -274,6 +297,66 @@ export default function CompanyAdminPage() {
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-sm font-semibold text-slate-500">Erledigt</p>
             <p className="mt-1 text-3xl font-bold">{doneCount}</p>
+          </div>
+        </div>
+
+        <div className="mt-7 grid gap-5 lg:grid-cols-[320px_1fr]">
+          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-sm font-semibold text-blue-700">
+              QR-Code für die Praxis
+            </p>
+            <h2 className="mt-1 text-xl font-bold">Kundenseite scannen</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Diesen QR-Code kannst du ausdrucken oder am Empfang zeigen.
+              Patienten gelangen direkt zur Warteschlange.
+            </p>
+
+            <div className="mt-4 flex justify-center rounded-lg border border-slate-200 bg-white p-4">
+              {qrCodeUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={qrCodeUrl}
+                  alt={`QR-Code für ${company?.name ?? "die Kundenseite"}`}
+                  className="h-56 w-56"
+                />
+              ) : (
+                <div className="flex h-56 w-56 items-center justify-center rounded-lg bg-slate-100 text-sm text-slate-500">
+                  QR-Code wird erstellt...
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4 grid gap-2">
+              <a
+                href={queueUrl}
+                className="rounded-lg bg-slate-950 px-4 py-3 text-center font-semibold text-white hover:bg-slate-800"
+              >
+                Kundenseite öffnen
+              </a>
+              {qrCodeUrl && (
+                <a
+                  href={qrCodeUrl}
+                  download={`kurzwarten-${slug}-qr-code.png`}
+                  className="rounded-lg border border-slate-300 bg-white px-4 py-3 text-center font-semibold text-slate-800 hover:bg-slate-50"
+                >
+                  QR-Code herunterladen
+                </a>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-sm font-semibold text-slate-500">
+              Link zur Kundenseite
+            </p>
+            <p className="mt-2 break-all rounded-lg bg-slate-50 p-4 font-mono text-sm text-slate-700">
+              {queueUrl}
+            </p>
+            <p className="mt-3 leading-7 text-slate-600">
+              Für den Aushang in der Praxis: QR-Code öffnen, herunterladen und
+              in ein Dokument einfügen. Der Link führt direkt zu{" "}
+              <span className="font-semibold">/warten/{slug}</span>.
+            </p>
           </div>
         </div>
 
