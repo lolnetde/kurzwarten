@@ -1,6 +1,11 @@
 "use client";
 
 import QRCode from "qrcode";
+import {
+  clearAdminPassword,
+  getSavedAdminPassword,
+  saveAdminPassword,
+} from "@/lib/admin-session";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
@@ -54,6 +59,7 @@ export default function CompanyAdminPage() {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [message, setMessage] = useState("");
   const [isLoadingCompany, setIsLoadingCompany] = useState(true);
+  const [isCheckingSavedLogin, setIsCheckingSavedLogin] = useState(true);
   const [isLoadingTickets, setIsLoadingTickets] = useState(false);
   const [isCreatingTicket, setIsCreatingTicket] = useState(false);
   const [loadingTicketId, setLoadingTicketId] = useState<number | null>(null);
@@ -140,18 +146,43 @@ export default function CompanyAdminPage() {
 
         if (data.success) {
           setCompany(data.company);
+
+          const savedPassword = getSavedAdminPassword(slug);
+
+          if (savedPassword) {
+            setIsUnlocking(true);
+
+            const loginResponse = await fetch("/api/company-admin-login", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ slug, password: savedPassword }),
+            });
+            const loginData = await loginResponse.json();
+
+            if (loginData.success) {
+              setCompany(loginData.company);
+              setIsUnlocked(true);
+              await Promise.all([loadTickets(), loadDoctors()]);
+            } else {
+              clearAdminPassword(slug);
+            }
+          }
         } else {
           setMessage(data.error ?? "Unternehmen wurde nicht gefunden.");
         }
       } catch {
         setMessage("Unternehmen konnte nicht geladen werden.");
       } finally {
+        setIsUnlocking(false);
+        setIsCheckingSavedLogin(false);
         setIsLoadingCompany(false);
       }
     }, 0);
 
     return () => window.clearTimeout(timeout);
-  }, [slug]);
+  }, [loadDoctors, loadTickets, slug]);
 
   async function unlockAdmin() {
     setMessage("");
@@ -181,6 +212,7 @@ export default function CompanyAdminPage() {
 
       if (data.success) {
         setIsUnlocked(true);
+        saveAdminPassword(slug, password.trim());
         setPassword("");
         await Promise.all([loadTickets(), loadDoctors()]);
       } else {
@@ -191,6 +223,18 @@ export default function CompanyAdminPage() {
     } finally {
       setIsUnlocking(false);
     }
+  }
+
+  function logoutAdmin() {
+    clearAdminPassword(slug);
+    setIsUnlocked(false);
+    setPassword("");
+    setTickets([]);
+    setDoctors([]);
+    setSelectedDoctorId("");
+    setNewTicketNumber(null);
+    setNewTicketDoctorName("");
+    setMessage("Abgemeldet.");
   }
 
   async function createAdminTicket() {
@@ -296,7 +340,9 @@ export default function CompanyAdminPage() {
               Adminbereich öffnen
             </h1>
             <p className="mt-4 text-lg leading-8 text-slate-600">
-              Gib das Admin-Passwort ein, um die Warteschlange zu verwalten.
+              {isCheckingSavedLogin
+                ? "Gespeicherte Anmeldung wird geprueft."
+                : "Gib das Admin-Passwort ein, um die Warteschlange zu verwalten."}
             </p>
 
             <label className="mt-7 block text-sm font-semibold text-slate-700">
@@ -309,14 +355,25 @@ export default function CompanyAdminPage() {
                 setMessage("");
               }}
               className="mt-2 h-14 w-full rounded-lg border border-slate-300 bg-white px-4 text-lg text-slate-950"
-              disabled={isLoadingCompany || !company || isUnlocking}
+              disabled={
+                isLoadingCompany ||
+                isCheckingSavedLogin ||
+                !company ||
+                isUnlocking
+              }
               placeholder="Passwort"
               type="password"
             />
 
             <button
               onClick={unlockAdmin}
-              disabled={isLoadingCompany || !company || !password.trim() || isUnlocking}
+              disabled={
+                isLoadingCompany ||
+                isCheckingSavedLogin ||
+                !company ||
+                !password.trim() ||
+                isUnlocking
+              }
               className="mt-5 h-14 w-full rounded-lg bg-blue-700 px-6 text-lg font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
             >
               {isLoadingCompany || isUnlocking ? "Wird geprüft..." : "Dashboard öffnen"}
@@ -367,6 +424,12 @@ export default function CompanyAdminPage() {
               className="rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white hover:bg-blue-800"
             >
               Aktualisieren
+            </button>
+            <button
+              onClick={logoutAdmin}
+              className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 font-semibold text-red-700 hover:bg-red-100"
+            >
+              Abmelden
             </button>
           </div>
         </div>
