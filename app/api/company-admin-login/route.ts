@@ -36,7 +36,8 @@ export async function POST(request: Request) {
     .from("companies")
     .select("id, name, slug, city, admin_password")
     .eq("slug", slug)
-    .single();
+    .limit(1)
+    .maybeSingle();
 
   const company = data as CompanyRow | null;
 

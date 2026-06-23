@@ -25,7 +25,8 @@ export async function POST(_request: Request, { params }: RouteParams) {
     .from("companies")
     .select("id, name, slug")
     .eq("slug", slug)
-    .single();
+    .limit(1)
+    .maybeSingle();
 
   const company = companyData as CompanyRow | null;
 

@@ -47,7 +47,8 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     .from("companies")
     .select("id")
     .eq("slug", slug)
-    .single();
+    .limit(1)
+    .maybeSingle();
 
   const company = companyData as CompanyRow | null;
 

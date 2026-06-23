@@ -26,15 +26,16 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     .from("companies")
     .update({ city: city || null })
     .eq("slug", slug)
-    .select("id, name, slug, city")
-    .single();
+    .select("id, name, slug, city");
 
-  if (error || !data) {
+  const company = data?.[0] ?? null;
+
+  if (error || !company) {
     return NextResponse.json(
       { success: false, error: error?.message ?? "Einstellungen konnten nicht gespeichert werden" },
       { status: 500 }
     );
   }
 
-  return NextResponse.json({ success: true, company: data });
+  return NextResponse.json({ success: true, company });
 }

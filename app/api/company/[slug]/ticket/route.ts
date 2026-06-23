@@ -57,7 +57,8 @@ export async function POST(request: Request, { params }: RouteParams) {
     .from("companies")
     .select("id, name, slug, city")
     .eq("slug", slug)
-    .single();
+    .limit(1)
+    .maybeSingle();
 
   const company = companyData as CompanyRow | null;
 
