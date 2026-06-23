@@ -48,6 +48,46 @@ function getStatusClass(status: string) {
   return "bg-blue-50 text-blue-800 border-blue-200";
 }
 
+function RefreshIcon({ isLoading }: { isLoading: boolean }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={`h-5 w-5 ${isLoading ? "animate-spin" : ""}`}
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <path
+        d="M20 11a8 8 0 0 0-14.6-4.5L4 8"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+      <path
+        d="M4 4v4h4"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+      <path
+        d="M4 13a8 8 0 0 0 14.6 4.5L20 16"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+      <path
+        d="M20 20v-4h-4"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+}
+
 export default function CompanyAdminPage() {
   const params = useParams<{ slug: string }>();
   const slug = params.slug;
@@ -411,31 +451,25 @@ export default function CompanyAdminPage() {
           <div className="flex flex-wrap gap-3">
             <a
               href={`/warten/${slug}`}
-              className="rounded-lg border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-800 hover:bg-slate-50"
+              className="rounded-lg border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-sm"
             >
               Kundenseite öffnen
             </a>
             <a
               href={`/admin/${slug}/settings`}
-              className="rounded-lg border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-800 hover:bg-slate-50"
+              className="rounded-lg border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-sm"
             >
               Einstellungen
             </a>
             <a
               href={`/admin/${slug}/history`}
-              className="rounded-lg border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-800 hover:bg-slate-50"
+              className="rounded-lg border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-sm"
             >
               History
             </a>
             <button
-              onClick={loadTickets}
-              className="rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white hover:bg-blue-800"
-            >
-              Aktualisieren
-            </button>
-            <button
               onClick={logoutAdmin}
-              className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 font-semibold text-red-700 hover:bg-red-100"
+              className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 font-semibold text-red-700 transition hover:-translate-y-0.5 hover:border-red-300 hover:bg-red-100 hover:shadow-sm"
             >
               Abmelden
             </button>
@@ -582,8 +616,17 @@ export default function CompanyAdminPage() {
         )}
 
         <div className="mt-7 rounded-lg border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-5 py-4">
+          <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
             <h2 className="text-xl font-bold">Aktuelle Tickets</h2>
+            <button
+              onClick={loadTickets}
+              disabled={isLoadingTickets}
+              title="Aktuelle Tickets neu laden"
+              aria-label="Aktuelle Tickets neu laden"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition hover:-translate-y-0.5 hover:bg-slate-50 hover:text-blue-700 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <RefreshIcon isLoading={isLoadingTickets} />
+            </button>
           </div>
 
           {isLoadingTickets && (
