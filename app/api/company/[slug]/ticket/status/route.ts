@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabaseServer } from "@/lib/supabase-server";
 import { NextResponse } from "next/server";
 
 const ALLOWED_STATUSES = ["waiting", "called", "done"];
@@ -43,7 +43,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     );
   }
 
-  const { data: companyData, error: companyError } = await supabase
+  const { data: companyData, error: companyError } = await supabaseServer
     .from("companies")
     .select("id")
     .eq("slug", slug)
@@ -59,9 +59,25 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     );
   }
 
-  const { error } = await supabase
+  const now = new Date().toISOString();
+  const updateData: {
+    status: string;
+    called_at?: string;
+    done_at?: string;
+  } = { status };
+
+  if (status === "called") {
+    updateData.called_at = now;
+  }
+
+  if (status === "done") {
+    updateData.called_at = now;
+    updateData.done_at = now;
+  }
+
+  const { error } = await supabaseServer
     .from("tickets")
-    .update({ status })
+    .update(updateData)
     .eq("company_id", company.id)
     .eq("id", ticketId);
 

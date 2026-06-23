@@ -44,6 +44,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
     )
     .eq("company_id", company.id)
     .eq("ticket_day", ticketDay)
+    .neq("status", "deleted")
     .order("ticket_number", { ascending: true });
 
   if (error) {

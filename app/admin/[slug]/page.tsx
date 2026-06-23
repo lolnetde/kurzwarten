@@ -421,6 +421,12 @@ export default function CompanyAdminPage() {
             >
               Einstellungen
             </a>
+            <a
+              href={`/admin/${slug}/history`}
+              className="rounded-lg border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-800 hover:bg-slate-50"
+            >
+              History
+            </a>
             <button
               onClick={loadTickets}
               className="rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white hover:bg-blue-800"

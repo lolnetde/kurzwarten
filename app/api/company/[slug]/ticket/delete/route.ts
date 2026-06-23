@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabaseServer } from "@/lib/supabase-server";
 import { NextResponse } from "next/server";
 
 type CompanyRow = {
@@ -33,7 +33,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     );
   }
 
-  const { data: companyData, error: companyError } = await supabase
+  const { data: companyData, error: companyError } = await supabaseServer
     .from("companies")
     .select("id")
     .eq("slug", slug)
@@ -49,9 +49,12 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     );
   }
 
-  const { error } = await supabase
+  const { error } = await supabaseServer
     .from("tickets")
-    .delete()
+    .update({
+      status: "deleted",
+      deleted_at: new Date().toISOString(),
+    })
     .eq("company_id", company.id)
     .eq("id", ticketId);
 
