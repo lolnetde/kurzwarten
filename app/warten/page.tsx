@@ -1,15 +1,76 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import QrScanner from "@/components/QrScanner";
+
+type CompanySuggestion = {
+  id: string;
+  name: string;
+  slug: string;
+  city: string | null;
+};
 
 export default function WartenOverviewPage() {
   const [companyName, setCompanyName] = useState("");
+  const [city, setCity] = useState("");
+  const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
+  const [suggestions, setSuggestions] = useState<CompanySuggestion[]>([]);
   const [message, setMessage] = useState("");
   const [isOpening, setIsOpening] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
 
   const trimmedCompanyName = companyName.trim();
+  const trimmedCity = city.trim();
   const canOpenCompany = trimmedCompanyName.length > 0 && !isOpening;
+
+  const handleQrResult = useCallback((value: string) => {
+    setIsScanning(false);
+
+    try {
+      const url = new URL(value);
+
+      if (url.pathname.startsWith("/warten/")) {
+        window.location.href = url.href;
+        return;
+      }
+    } catch {
+      if (value.startsWith("/warten/")) {
+        window.location.href = value;
+        return;
+      }
+    }
+
+    setMessage("Dieser QR-Code gehört nicht zu einer KurzWarten-Seite.");
+  }, []);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(async () => {
+      if (trimmedCompanyName.length < 2) {
+        setSuggestions([]);
+        return;
+      }
+
+      const params = new URLSearchParams({ q: trimmedCompanyName });
+
+      if (showAdvancedSearch && trimmedCity) {
+        params.set("city", trimmedCity);
+      }
+
+      try {
+        const response = await fetch(`/api/companies/search?${params.toString()}`);
+        const data = await response.json();
+
+        if (data.success) {
+          setSuggestions(data.companies ?? []);
+        }
+      } catch {
+        setSuggestions([]);
+      }
+    }, 250);
+
+    return () => window.clearTimeout(timeout);
+  }, [showAdvancedSearch, trimmedCity, trimmedCompanyName]);
 
   async function openCompanyQueue() {
     setMessage("");
@@ -46,6 +107,10 @@ export default function WartenOverviewPage() {
 
   return (
     <main className="min-h-[calc(100vh-73px)] bg-[#f5f7fb] text-slate-950">
+      {isScanning && (
+        <QrScanner onResult={handleQrResult} onClose={() => setIsScanning(false)} />
+      )}
+
       <section className="mx-auto flex min-h-[calc(100vh-73px)] max-w-xl flex-col justify-center px-5 py-10">
         <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <p className="text-sm font-semibold text-blue-700">
@@ -55,11 +120,23 @@ export default function WartenOverviewPage() {
             Warteschlange finden
           </h1>
           <p className="mt-4 text-lg leading-8 text-slate-600">
-            Gib den Namen der Praxis oder des Unternehmens ein. Danach kannst du
-            dein Ticket ziehen.
+            Gib den Namen der Praxis ein oder scanne den QR-Code am Empfang.
           </p>
 
-          <label className="mt-7 block text-sm font-semibold text-slate-700">
+          <button
+            onClick={() => setIsScanning(true)}
+            className="mt-6 h-14 w-full rounded-lg bg-slate-950 px-6 text-lg font-semibold text-white hover:bg-slate-800"
+          >
+            QR-Code scannen
+          </button>
+
+          <div className="my-6 flex items-center gap-3 text-sm font-semibold text-slate-500">
+            <div className="h-px flex-1 bg-slate-200" />
+            oder suchen
+            <div className="h-px flex-1 bg-slate-200" />
+          </div>
+
+          <label className="block text-sm font-semibold text-slate-700">
             Name der Praxis oder des Unternehmens
           </label>
           <input
@@ -69,8 +146,48 @@ export default function WartenOverviewPage() {
               setMessage("");
             }}
             className="mt-2 h-14 w-full rounded-lg border border-slate-300 bg-white px-4 text-lg text-slate-950"
-            placeholder="z. B. Hausarzt Müller"
+            placeholder="z. B. Hausarzt Jo"
           />
+
+          {suggestions.length > 0 && (
+            <div className="mt-2 overflow-hidden rounded-lg border border-slate-200 bg-white">
+              {suggestions.map((company) => (
+                <button
+                  key={company.id}
+                  onClick={() => {
+                    window.location.href = `/warten/${company.slug}`;
+                  }}
+                  className="block w-full border-b border-slate-100 px-4 py-3 text-left last:border-b-0 hover:bg-blue-50"
+                >
+                  <span className="font-semibold text-slate-950">{company.name}</span>
+                  {company.city && (
+                    <span className="ml-2 text-sm text-slate-500">{company.city}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <button
+            onClick={() => setShowAdvancedSearch((value) => !value)}
+            className="mt-4 rounded-lg border border-slate-300 bg-white px-4 py-2 font-semibold text-slate-800 hover:bg-slate-50"
+          >
+            {showAdvancedSearch ? "Erweiterte Suche ausblenden" : "Erweiterte Suche"}
+          </button>
+
+          {showAdvancedSearch && (
+            <div className="mt-4 rounded-lg bg-slate-50 p-4">
+              <label className="block text-sm font-semibold text-slate-700">
+                Stadt oder Ort
+              </label>
+              <input
+                value={city}
+                onChange={(event) => setCity(event.target.value)}
+                className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-slate-950"
+                placeholder="z. B. Köln"
+              />
+            </div>
+          )}
 
           <button
             onClick={openCompanyQueue}

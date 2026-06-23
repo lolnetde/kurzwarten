@@ -6,6 +6,7 @@ type CompanyRow = {
   id: string;
   name: string;
   slug: string;
+  city: string | null;
 };
 
 export async function POST(request: Request) {
@@ -32,7 +33,7 @@ export async function POST(request: Request) {
 
   const { data, error } = await supabase
     .from("companies")
-    .select("id, name, slug")
+    .select("id, name, slug, city")
     .eq("slug", slug)
     .single();
 

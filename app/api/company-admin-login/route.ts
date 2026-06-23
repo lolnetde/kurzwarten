@@ -5,6 +5,7 @@ type CompanyRow = {
   id: string;
   name: string;
   slug: string;
+  city: string | null;
   admin_password: string;
 };
 
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
 
   const { data, error } = await supabase
     .from("companies")
-    .select("id, name, slug, admin_password")
+    .select("id, name, slug, city, admin_password")
     .eq("slug", slug)
     .single();
 
@@ -59,6 +60,7 @@ export async function POST(request: Request) {
       id: company.id,
       name: company.name,
       slug: company.slug,
+      city: company.city,
     },
   });
 }

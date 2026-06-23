@@ -12,7 +12,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
 
   const { data: company, error } = await supabase
     .from("companies")
-    .select("id, name, slug")
+    .select("id, name, slug, city")
     .eq("slug", slug)
     .single();
 

@@ -7,6 +7,7 @@ type CompanyRow = {
   id: string;
   name: string;
   slug: string;
+  city: string | null;
 };
 
 type TicketRow = {
@@ -54,7 +55,7 @@ export async function POST(request: Request, { params }: RouteParams) {
 
   const { data: companyData, error: companyError } = await supabase
     .from("companies")
-    .select("id, name, slug")
+    .select("id, name, slug, city")
     .eq("slug", slug)
     .single();
 

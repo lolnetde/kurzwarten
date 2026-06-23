@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import QrScanner from "@/components/QrScanner";
 
 type Company = {
   id: string;
@@ -21,6 +22,7 @@ export default function HomePage() {
   const [loginMessage, setLoginMessage] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
 
   const trimmedCompanyName = companyName.trim();
   const trimmedCompanyPassword = companyPassword.trim();
@@ -35,6 +37,26 @@ export default function HomePage() {
     !isNameTooLong &&
     !isCreating;
   const canOpenCompany = trimmedLoginName.length > 0 && !isLoggingIn;
+
+  const handleQrResult = useCallback((value: string) => {
+    setIsScanning(false);
+
+    try {
+      const url = new URL(value);
+
+      if (url.pathname.startsWith("/warten/")) {
+        window.location.href = url.href;
+        return;
+      }
+    } catch {
+      if (value.startsWith("/warten/")) {
+        window.location.href = value;
+        return;
+      }
+    }
+
+    setLoginMessage("Dieser QR-Code gehört nicht zu einer KurzWarten-Seite.");
+  }, []);
 
   async function createCompany() {
     setMessage("");
@@ -126,6 +148,10 @@ export default function HomePage() {
 
   return (
     <main className="bg-[#f5f7fb] text-slate-950">
+      {isScanning && (
+        <QrScanner onResult={handleQrResult} onClose={() => setIsScanning(false)} />
+      )}
+
       <section className="mx-auto grid min-h-[calc(100vh-73px)] max-w-6xl gap-10 px-5 py-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
         <div>
           <p className="inline-flex rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-800">
@@ -163,12 +189,20 @@ export default function HomePage() {
             </div>
           </div>
 
-          <Link
-            href="/warten"
-            className="mt-8 inline-flex rounded-lg bg-slate-950 px-5 py-3 font-semibold text-white hover:bg-slate-800"
-          >
-            Kundenseite öffnen
-          </Link>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              href="/warten"
+              className="inline-flex rounded-lg bg-slate-950 px-5 py-3 font-semibold text-white hover:bg-slate-800"
+            >
+              Kundenseite öffnen
+            </Link>
+            <button
+              onClick={() => setIsScanning(true)}
+              className="rounded-lg border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-800 hover:bg-slate-50"
+            >
+              QR-Code scannen
+            </button>
+          </div>
         </div>
 
         <div className="grid gap-5">

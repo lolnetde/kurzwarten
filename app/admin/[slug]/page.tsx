@@ -8,6 +8,7 @@ type Company = {
   id: string;
   name: string;
   slug: string;
+  city: string | null;
 };
 
 type Ticket = {
@@ -44,6 +45,8 @@ export default function CompanyAdminPage() {
   const [isCreatingTicket, setIsCreatingTicket] = useState(false);
   const [loadingTicketId, setLoadingTicketId] = useState<number | null>(null);
   const [newTicketNumber, setNewTicketNumber] = useState<number | null>(null);
+  const [city, setCity] = useState("");
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [queueUrl, setQueueUrl] = useState("");
   const [qrCodeUrl, setQrCodeUrl] = useState("");
 
@@ -60,6 +63,7 @@ export default function CompanyAdminPage() {
 
       if (data.success) {
         setCompany(data.company);
+        setCity(data.company.city ?? "");
         setTickets(data.tickets ?? []);
       } else {
         setMessage(data.error ?? "Tickets konnten nicht geladen werden.");
@@ -99,6 +103,7 @@ export default function CompanyAdminPage() {
 
         if (data.success) {
           setCompany(data.company);
+          setCity(data.company.city ?? "");
         } else {
           setMessage(data.error ?? "Unternehmen wurde nicht gefunden.");
         }
@@ -174,6 +179,35 @@ export default function CompanyAdminPage() {
       setMessage("Verbindung fehlgeschlagen. Ticket wurde nicht erstellt.");
     } finally {
       setIsCreatingTicket(false);
+    }
+  }
+
+  async function saveSettings() {
+    setMessage("");
+    setIsSavingSettings(true);
+
+    try {
+      const response = await fetch(`/api/company/${slug}/settings`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ city }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setCompany(data.company);
+        setCity(data.company.city ?? "");
+        setMessage("Einstellungen gespeichert.");
+      } else {
+        setMessage(data.error ?? "Einstellungen konnten nicht gespeichert werden.");
+      }
+    } catch {
+      setMessage("Verbindung fehlgeschlagen. Einstellungen wurden nicht gespeichert.");
+    } finally {
+      setIsSavingSettings(false);
     }
   }
 
@@ -409,6 +443,34 @@ export default function CompanyAdminPage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <div className="mt-7 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-sm font-semibold text-blue-700">Einstellungen</p>
+          <h2 className="mt-1 text-xl font-bold">Praxisdaten</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Die Stadt ist optional. Wenn sie ausgefüllt ist, hilft sie Patienten
+            bei der erweiterten Suche.
+          </p>
+
+          <label className="mt-4 block text-sm font-semibold text-slate-700">
+            Stadt oder Ort
+          </label>
+          <div className="mt-2 grid gap-3 sm:grid-cols-[1fr_auto]">
+            <input
+              value={city}
+              onChange={(event) => setCity(event.target.value)}
+              className="h-12 rounded-lg border border-slate-300 bg-white px-4 text-slate-950"
+              placeholder="z. B. Köln"
+            />
+            <button
+              onClick={saveSettings}
+              disabled={isSavingSettings}
+              className="h-12 rounded-lg bg-blue-700 px-5 font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
+            >
+              {isSavingSettings ? "Speichert..." : "Speichern"}
+            </button>
           </div>
         </div>
 

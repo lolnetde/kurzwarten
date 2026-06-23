@@ -9,6 +9,7 @@ type CompanyRow = {
   id: string;
   name: string;
   slug: string;
+  city: string | null;
 };
 
 export async function POST(request: Request) {
@@ -82,7 +83,7 @@ export async function POST(request: Request) {
   const { data, error } = await supabase
     .from("companies")
     .insert({ name, slug, admin_password: password })
-    .select("id, name, slug")
+    .select("id, name, slug, city")
     .single();
 
   const company = data as CompanyRow | null;
