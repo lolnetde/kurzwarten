@@ -16,7 +16,6 @@ export default function HomePage() {
   const [companyName, setCompanyName] = useState("");
   const [companyPassword, setCompanyPassword] = useState("");
   const [loginName, setLoginName] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
   const [company, setCompany] = useState<Company | null>(null);
   const [message, setMessage] = useState("");
   const [loginMessage, setLoginMessage] = useState("");
@@ -26,7 +25,6 @@ export default function HomePage() {
   const trimmedCompanyName = companyName.trim();
   const trimmedCompanyPassword = companyPassword.trim();
   const trimmedLoginName = loginName.trim();
-  const trimmedLoginPassword = loginPassword.trim();
   const isNameTooLong = trimmedCompanyName.length > MAX_COMPANY_NAME_LENGTH;
   const isPasswordTooShort =
     trimmedCompanyPassword.length > 0 &&
@@ -36,10 +34,7 @@ export default function HomePage() {
     trimmedCompanyPassword.length >= MIN_PASSWORD_LENGTH &&
     !isNameTooLong &&
     !isCreating;
-  const canOpenCompany =
-    trimmedLoginName.length > 0 &&
-    trimmedLoginPassword.length > 0 &&
-    !isLoggingIn;
+  const canOpenCompany = trimmedLoginName.length > 0 && !isLoggingIn;
 
   async function createCompany() {
     setMessage("");
@@ -97,15 +92,15 @@ export default function HomePage() {
   async function openCompany() {
     setLoginMessage("");
 
-    if (!trimmedLoginName || !trimmedLoginPassword) {
-      setLoginMessage("Bitte gib Namen und Passwort ein.");
+    if (!trimmedLoginName) {
+      setLoginMessage("Bitte gib den Namen der Praxis oder des Unternehmens ein.");
       return;
     }
 
     setIsLoggingIn(true);
 
     try {
-      const companyResponse = await fetch("/api/company-login", {
+      const response = await fetch("/api/company-login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -113,32 +108,14 @@ export default function HomePage() {
         body: JSON.stringify({ name: trimmedLoginName }),
       });
 
-      const companyData = await companyResponse.json();
+      const data = await response.json();
 
-      if (!companyData.success) {
-        setLoginMessage(
-          companyData.error ?? "Praxis oder Unternehmen wurde nicht gefunden."
-        );
-        return;
-      }
-
-      const loginResponse = await fetch("/api/company-admin-login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          slug: companyData.company.slug,
-          password: trimmedLoginPassword,
-        }),
-      });
-
-      const loginData = await loginResponse.json();
-
-      if (loginData.success) {
-        window.location.href = `/admin/${loginData.company.slug}`;
+      if (data.success) {
+        window.location.href = `/admin/${data.company.slug}`;
       } else {
-        setLoginMessage(loginData.error ?? "Login fehlgeschlagen.");
+        setLoginMessage(
+          data.error ?? "Praxis oder Unternehmen wurde nicht gefunden."
+        );
       }
     } catch {
       setLoginMessage("Verbindung fehlgeschlagen. Bitte versuche es erneut.");
@@ -199,8 +176,8 @@ export default function HomePage() {
             <p className="text-sm font-semibold text-blue-700">Für Praxen</p>
             <h2 className="mt-1 text-2xl font-bold">Adminbereich öffnen</h2>
             <p className="mt-2 leading-7 text-slate-600">
-              Melde dich mit Namen und Admin-Passwort an, um deine
-              Warteschlange zu verwalten.
+              Gib den Namen deiner Praxis oder deines Unternehmens ein. Das
+              Passwort wird erst auf der Adminseite abgefragt.
             </p>
 
             <label className="mt-5 block text-sm font-semibold text-slate-700">
@@ -216,26 +193,12 @@ export default function HomePage() {
               placeholder="z. B. Hausarzt Müller"
             />
 
-            <label className="mt-4 block text-sm font-semibold text-slate-700">
-              Admin-Passwort
-            </label>
-            <input
-              value={loginPassword}
-              onChange={(event) => {
-                setLoginPassword(event.target.value);
-                setLoginMessage("");
-              }}
-              className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-slate-950"
-              placeholder="Passwort"
-              type="password"
-            />
-
             <button
               onClick={openCompany}
               disabled={!canOpenCompany}
               className="mt-5 h-12 w-full rounded-lg bg-blue-700 px-5 font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
             >
-              {isLoggingIn ? "Wird geöffnet..." : "Dashboard öffnen"}
+              {isLoggingIn ? "Wird geöffnet..." : "Weiter zum Adminbereich"}
             </button>
 
             {loginMessage && (
