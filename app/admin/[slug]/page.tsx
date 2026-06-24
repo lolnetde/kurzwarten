@@ -737,87 +737,37 @@ export default function CompanyAdminPage() {
 
           <div className="divide-y divide-slate-200">
             {tickets.map((ticket) => (
-              <div
-                key={ticket.id}
-                className="grid gap-4 px-5 py-4 lg:grid-cols-[1fr_auto]"
-              >
-                <div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <p className="text-xl font-bold">
+              <div key={ticket.id} className="px-5 py-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  <p className="text-xl">
+                    <span className="font-bold">
                       Ticket #{ticket.ticket_number}
-                    </p>
-                    <span
-                      className={`rounded-full border px-3 py-1 text-sm font-semibold ${getStatusClass(ticket.status)}`}
-                    >
-                      {getStatusLabel(ticket.status)}
                     </span>
-                  </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <p className="text-sm text-slate-500">
-                      {ticket.customer_name && ticket.customer_name !== "Vor Ort"
-                        ? `Name: ${ticket.customer_name}`
-                        : "Kein Name hinterlegt"}
-                    </p>
-                    {editingNameTicketId !== ticket.id && (
-                      <button
-                        onClick={() => startEditingName(ticket)}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-800"
-                      >
-                        <NameIcon />
-                        {ticket.customer_name && ticket.customer_name !== "Vor Ort"
-                          ? "Name ändern"
-                          : "Name hinzufügen"}
-                      </button>
-                    )}
-                  </div>
-                  {editingNameTicketId === ticket.id && (
-                    <div className="mt-3 flex max-w-xl flex-col gap-2 sm:flex-row">
-                      <input
-                        value={nameDraft}
-                        onChange={(event) => {
-                          setNameDraft(event.target.value);
-                          setMessage("");
-                        }}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") {
-                            event.preventDefault();
-                            void saveTicketName(ticket.id);
-                          }
-
-                          if (event.key === "Escape") {
-                            event.preventDefault();
-                            cancelEditingName();
-                          }
-                        }}
-                        className="h-11 min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 text-slate-950"
-                        maxLength={80}
-                        placeholder="Name der Person"
-                        autoFocus
-                      />
-                      <button
-                        onClick={() => saveTicketName(ticket.id)}
-                        disabled={isSavingName || !nameDraft.trim()}
-                        className="h-11 rounded-lg bg-blue-700 px-4 font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
-                      >
-                        Speichern
-                      </button>
-                      <button
-                        onClick={cancelEditingName}
-                        disabled={isSavingName}
-                        className="h-11 rounded-lg border border-slate-300 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        Abbrechen
-                      </button>
-                    </div>
-                  )}
-                  <p className="mt-1 text-sm text-slate-500">
-                    {ticket.doctors
-                      ? `Zugeordnet: ${ticket.doctors.name}`
-                      : "Noch keinem Arzt zugeordnet"}
                   </p>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
+                  <p className="text-sm text-slate-600">
+                    Name:{" "}
+                    <span className="font-bold text-slate-950">
+                      {ticket.customer_name && ticket.customer_name !== "Vor Ort"
+                        ? ticket.customer_name
+                        : "-"}
+                    </span>
+                  </p>
+                  <span
+                    className={`rounded-full border px-3 py-1 text-sm font-semibold ${getStatusClass(ticket.status)}`}
+                  >
+                    {getStatusLabel(ticket.status)}
+                  </span>
+                  {editingNameTicketId !== ticket.id && (
+                    <button
+                      onClick={() => startEditingName(ticket)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-800"
+                    >
+                      <NameIcon />
+                      {ticket.customer_name && ticket.customer_name !== "Vor Ort"
+                        ? "Name ändern"
+                        : "Name hinzufügen"}
+                    </button>
+                  )}
                   <button
                     onClick={() => updateStatus(ticket.id, "called")}
                     disabled={loadingTicketId === ticket.id}
@@ -842,6 +792,47 @@ export default function CompanyAdminPage() {
                     {loadingTicketId === ticket.id ? "Bitte warten..." : "Entfernen"}
                   </button>
                 </div>
+
+                {editingNameTicketId === ticket.id && (
+                  <div className="mt-3 flex max-w-xl flex-col gap-2 sm:flex-row">
+                    <input
+                      value={nameDraft}
+                      onChange={(event) => {
+                        setNameDraft(event.target.value);
+                        setMessage("");
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          void saveTicketName(ticket.id);
+                        }
+
+                        if (event.key === "Escape") {
+                          event.preventDefault();
+                          cancelEditingName();
+                        }
+                      }}
+                      className="h-11 min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 text-slate-950"
+                      maxLength={80}
+                      placeholder="Name der Person"
+                      autoFocus
+                    />
+                    <button
+                      onClick={() => saveTicketName(ticket.id)}
+                      disabled={isSavingName || !nameDraft.trim()}
+                      className="h-11 rounded-lg bg-blue-700 px-4 font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
+                    >
+                      Speichern
+                    </button>
+                    <button
+                      onClick={cancelEditingName}
+                      disabled={isSavingName}
+                      className="h-11 rounded-lg border border-slate-300 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Abbrechen
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
