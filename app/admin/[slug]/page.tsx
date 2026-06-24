@@ -122,6 +122,7 @@ export default function CompanyAdminPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [selectedDoctorId, setSelectedDoctorId] = useState("");
+  const [ticketDoctorFilter, setTicketDoctorFilter] = useState("all");
   const [password, setPassword] = useState("");
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(false);
@@ -144,6 +145,10 @@ export default function CompanyAdminPage() {
   const waitingCount = tickets.filter((ticket) => ticket.status === "waiting").length;
   const calledCount = tickets.filter((ticket) => ticket.status === "called").length;
   const doneCount = tickets.filter((ticket) => ticket.status === "done").length;
+  const visibleTickets =
+    ticketDoctorFilter === "all"
+      ? tickets
+      : tickets.filter((ticket) => ticket.doctor_id === ticketDoctorFilter);
 
   const loadTickets = useCallback(async () => {
     setIsLoadingTickets(true);
@@ -305,6 +310,7 @@ export default function CompanyAdminPage() {
     setTickets([]);
     setDoctors([]);
     setSelectedDoctorId("");
+    setTicketDoctorFilter("all");
     setNewTicketNumber(null);
     setNewTicketDoctorName("");
     setMessage("Abgemeldet.");
@@ -712,34 +718,58 @@ export default function CompanyAdminPage() {
         )}
 
         <div className="mt-7 rounded-lg border border-slate-200 bg-white shadow-sm">
-          <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
+          <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 md:flex-row md:items-center md:justify-between">
             <h2 className="text-xl font-bold">Aktuelle Tickets</h2>
-            <button
-              onClick={loadTickets}
-              disabled={isLoadingTickets}
-              title="Aktuelle Tickets neu laden"
-              aria-label="Aktuelle Tickets neu laden"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition hover:-translate-y-0.5 hover:bg-slate-50 hover:text-blue-700 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <RefreshIcon isLoading={isLoadingTickets} />
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={ticketDoctorFilter}
+                onChange={(event) => setTicketDoctorFilter(event.target.value)}
+                className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
+                aria-label="Ticketliste nach Arzt filtern"
+              >
+                <option value="all">Alle Tickets</option>
+                {doctors.map((doctor) => (
+                  <option key={doctor.id} value={doctor.id}>
+                    {doctor.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={loadTickets}
+                disabled={isLoadingTickets}
+                title="Aktuelle Tickets neu laden"
+                aria-label="Aktuelle Tickets neu laden"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition hover:-translate-y-0.5 hover:bg-slate-50 hover:text-blue-700 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <RefreshIcon isLoading={isLoadingTickets} />
+              </button>
+            </div>
           </div>
 
           {isLoadingTickets && (
             <p className="p-5 text-slate-600">Tickets werden geladen...</p>
           )}
 
-          {!isLoadingTickets && tickets.length === 0 && (
+          {!isLoadingTickets && visibleTickets.length === 0 && (
             <p className="p-5 text-slate-600">
-              Aktuell gibt es keine Tickets.
+              {tickets.length === 0
+                ? "Aktuell gibt es keine Tickets."
+                : "Für diese Auswahl gibt es keine Tickets."}
             </p>
           )}
 
           <div className="divide-y divide-slate-200">
-            {tickets.map((ticket) => (
+            {visibleTickets.map((ticket) => (
               <div key={ticket.id} className="px-5 py-4">
-                <div className="flex flex-wrap items-center gap-3 lg:flex-nowrap">
-                  <div className="flex min-w-0 flex-wrap items-baseline gap-x-5 gap-y-1">
+                <div className="grid gap-3 lg:grid-cols-[8.5rem_minmax(0,1fr)_32rem] lg:items-center">
+                  <div className="flex shrink-0">
+                    <span
+                      className={`inline-flex w-32 justify-center rounded-full border px-3 py-1 text-sm font-semibold ${getStatusClass(ticket.status)}`}
+                    >
+                      {getStatusLabel(ticket.status)}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
                     <p className="text-xl">
                     <span className="font-bold">
                       Ticket #{ticket.ticket_number}
@@ -753,17 +783,18 @@ export default function CompanyAdminPage() {
                         : "-"}
                     </span>
                     </p>
-                  </div>
-                  <div className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-2">
-                    <span
-                    className={`rounded-full border px-3 py-1 text-sm font-semibold ${getStatusClass(ticket.status)}`}
-                  >
-                    {getStatusLabel(ticket.status)}
+                    <p className="text-base text-slate-600">
+                    Arzt:{" "}
+                    <span className="font-bold text-slate-950">
+                      {ticket.doctors ? ticket.doctors.name : "-"}
                     </span>
+                    </p>
+                  </div>
+                  <div className="flex w-full shrink-0 flex-wrap items-center justify-start gap-2 lg:w-[32rem] lg:justify-end">
                     {editingNameTicketId !== ticket.id && (
                     <button
                       onClick={() => startEditingName(ticket)}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-800"
+                      className="inline-flex w-40 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-800"
                     >
                       <NameIcon />
                       {ticket.customer_name && ticket.customer_name !== "Vor Ort"
@@ -774,7 +805,7 @@ export default function CompanyAdminPage() {
                     <button
                     onClick={() => updateStatus(ticket.id, "called")}
                     disabled={loadingTicketId === ticket.id}
-                    className="rounded-lg bg-amber-400 px-4 py-2 font-semibold text-slate-950 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="w-28 rounded-lg bg-amber-400 px-4 py-2 font-semibold text-slate-950 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Aufrufen
                     </button>
@@ -782,7 +813,7 @@ export default function CompanyAdminPage() {
                     <button
                     onClick={() => updateStatus(ticket.id, "done")}
                     disabled={loadingTicketId === ticket.id}
-                    className="rounded-lg bg-emerald-700 px-4 py-2 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                    className="w-28 rounded-lg bg-emerald-700 px-4 py-2 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Erledigt
                     </button>
@@ -790,7 +821,7 @@ export default function CompanyAdminPage() {
                     <button
                     onClick={() => deleteTicket(ticket.id)}
                     disabled={loadingTicketId === ticket.id}
-                    className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 font-semibold text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="w-28 rounded-lg border border-red-200 bg-red-50 px-4 py-2 font-semibold text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {loadingTicketId === ticket.id ? "Bitte warten..." : "Entfernen"}
                     </button>
