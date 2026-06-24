@@ -114,6 +114,51 @@ function NameIcon() {
   );
 }
 
+function CheckIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-5 w-5"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <path
+        d="m5 12 4.2 4.2L19 6.8"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-5 w-5"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <path
+        d="M4 7h16"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+      <path
+        d="M10 11v6M14 11v6M6 7l1 14h10l1-14M9 7V4h6v3"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+}
+
 export default function CompanyAdminPage() {
   const params = useParams<{ slug: string }>();
   const slug = params.slug;
@@ -761,7 +806,7 @@ export default function CompanyAdminPage() {
           <div className="divide-y divide-slate-200">
             {visibleTickets.map((ticket) => (
               <div key={ticket.id} className="px-5 py-4">
-                <div className="grid gap-3 lg:grid-cols-[8.5rem_minmax(0,1fr)_32rem] lg:items-center">
+                <div className="grid gap-3 lg:grid-cols-[8.5rem_minmax(0,1fr)_22rem] lg:items-center">
                   <div className="flex shrink-0">
                     <span
                       className={`inline-flex w-32 justify-center rounded-full border px-3 py-1 text-sm font-semibold ${getStatusClass(ticket.status)}`}
@@ -790,7 +835,7 @@ export default function CompanyAdminPage() {
                     </span>
                     </p>
                   </div>
-                  <div className="flex w-full shrink-0 flex-wrap items-center justify-start gap-2 lg:w-[32rem] lg:justify-end">
+                  <div className="flex w-full shrink-0 flex-wrap items-center justify-start gap-2 lg:w-[22rem] lg:justify-end">
                     {editingNameTicketId !== ticket.id && (
                     <button
                       onClick={() => startEditingName(ticket)}
@@ -813,17 +858,21 @@ export default function CompanyAdminPage() {
                     <button
                     onClick={() => updateStatus(ticket.id, "done")}
                     disabled={loadingTicketId === ticket.id}
-                    className="w-28 rounded-lg bg-emerald-700 px-4 py-2 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                    title="Erledigt"
+                    aria-label={`Ticket ${ticket.ticket_number} erledigen`}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-800 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    Erledigt
+                    <CheckIcon />
                     </button>
 
                     <button
                     onClick={() => deleteTicket(ticket.id)}
                     disabled={loadingTicketId === ticket.id}
-                    className="w-28 rounded-lg border border-red-200 bg-red-50 px-4 py-2 font-semibold text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    title="Entfernen"
+                    aria-label={`Ticket ${ticket.ticket_number} entfernen`}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {loadingTicketId === ticket.id ? "Bitte warten..." : "Entfernen"}
+                    <TrashIcon />
                     </button>
                   </div>
                 </div>
