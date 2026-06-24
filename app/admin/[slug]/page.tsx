@@ -738,26 +738,29 @@ export default function CompanyAdminPage() {
           <div className="divide-y divide-slate-200">
             {tickets.map((ticket) => (
               <div key={ticket.id} className="px-5 py-4">
-                <div className="flex flex-wrap items-center gap-3">
-                  <p className="text-xl">
+                <div className="flex flex-wrap items-center gap-3 lg:flex-nowrap">
+                  <div className="flex min-w-0 flex-wrap items-baseline gap-x-5 gap-y-1">
+                    <p className="text-xl">
                     <span className="font-bold">
                       Ticket #{ticket.ticket_number}
                     </span>
-                  </p>
-                  <p className="text-sm text-slate-600">
+                    </p>
+                    <p className="text-base text-slate-600">
                     Name:{" "}
                     <span className="font-bold text-slate-950">
                       {ticket.customer_name && ticket.customer_name !== "Vor Ort"
                         ? ticket.customer_name
                         : "-"}
                     </span>
-                  </p>
-                  <span
+                    </p>
+                  </div>
+                  <div className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-2">
+                    <span
                     className={`rounded-full border px-3 py-1 text-sm font-semibold ${getStatusClass(ticket.status)}`}
                   >
                     {getStatusLabel(ticket.status)}
-                  </span>
-                  {editingNameTicketId !== ticket.id && (
+                    </span>
+                    {editingNameTicketId !== ticket.id && (
                     <button
                       onClick={() => startEditingName(ticket)}
                       className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-800"
@@ -767,30 +770,31 @@ export default function CompanyAdminPage() {
                         ? "Name ändern"
                         : "Name hinzufügen"}
                     </button>
-                  )}
-                  <button
+                    )}
+                    <button
                     onClick={() => updateStatus(ticket.id, "called")}
                     disabled={loadingTicketId === ticket.id}
                     className="rounded-lg bg-amber-400 px-4 py-2 font-semibold text-slate-950 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Aufrufen
-                  </button>
+                    </button>
 
-                  <button
+                    <button
                     onClick={() => updateStatus(ticket.id, "done")}
                     disabled={loadingTicketId === ticket.id}
                     className="rounded-lg bg-emerald-700 px-4 py-2 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Erledigt
-                  </button>
+                    </button>
 
-                  <button
+                    <button
                     onClick={() => deleteTicket(ticket.id)}
                     disabled={loadingTicketId === ticket.id}
                     className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 font-semibold text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {loadingTicketId === ticket.id ? "Bitte warten..." : "Entfernen"}
-                  </button>
+                    </button>
+                  </div>
                 </div>
 
                 {editingNameTicketId === ticket.id && (
