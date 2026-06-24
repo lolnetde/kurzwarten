@@ -6,7 +6,7 @@ import {
   getSavedAdminPassword,
   saveAdminPassword,
 } from "@/lib/admin-session";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type DragEvent } from "react";
 import { useParams } from "next/navigation";
 
 type Company = {
@@ -35,6 +35,10 @@ type Doctor = {
   treatment_time_min: number;
   treatment_time_max: number;
 };
+
+function getDoctorOrderStorageKey(slug: string) {
+  return `kurzwarten-doctor-ticket-order-${slug}`;
+}
 
 function getStatusLabel(status: string) {
   if (status === "called") return "Aufgerufen";
@@ -159,6 +163,25 @@ function TrashIcon() {
   );
 }
 
+function MoveIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-4 w-4"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <path
+        d="M8 7h8M8 12h8M8 17h8"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+}
+
 export default function CompanyAdminPage() {
   const params = useParams<{ slug: string }>();
   const slug = params.slug;
@@ -168,6 +191,10 @@ export default function CompanyAdminPage() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [selectedDoctorId, setSelectedDoctorId] = useState("");
   const [ticketDoctorFilter, setTicketDoctorFilter] = useState("all");
+  const [doctorTicketOrders, setDoctorTicketOrders] = useState<
+    Record<string, number[]>
+  >({});
+  const [draggedTicketId, setDraggedTicketId] = useState<number | null>(null);
   const [password, setPassword] = useState("");
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(false);
@@ -190,10 +217,26 @@ export default function CompanyAdminPage() {
   const waitingCount = tickets.filter((ticket) => ticket.status === "waiting").length;
   const calledCount = tickets.filter((ticket) => ticket.status === "called").length;
   const doneCount = tickets.filter((ticket) => ticket.status === "done").length;
+  const canReorderTickets = ticketDoctorFilter !== "all";
   const visibleTickets =
     ticketDoctorFilter === "all"
       ? tickets
-      : tickets.filter((ticket) => ticket.doctor_id === ticketDoctorFilter);
+      : tickets
+          .filter((ticket) => ticket.doctor_id === ticketDoctorFilter)
+          .sort((firstTicket, secondTicket) => {
+            const currentOrder = doctorTicketOrders[ticketDoctorFilter] ?? [];
+            const firstIndex = currentOrder.indexOf(firstTicket.id);
+            const secondIndex = currentOrder.indexOf(secondTicket.id);
+
+            if (firstIndex !== -1 && secondIndex !== -1) {
+              return firstIndex - secondIndex;
+            }
+
+            if (firstIndex !== -1) return -1;
+            if (secondIndex !== -1) return 1;
+
+            return firstTicket.ticket_number - secondTicket.ticket_number;
+          });
 
   const loadTickets = useCallback(async () => {
     setIsLoadingTickets(true);
@@ -256,6 +299,24 @@ export default function CompanyAdminPage() {
           light: "#ffffff",
         },
       }).then(setQrCodeUrl);
+    }, 0);
+
+    return () => window.clearTimeout(timeout);
+  }, [slug]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      try {
+        const savedOrder = window.localStorage.getItem(
+          getDoctorOrderStorageKey(slug)
+        );
+
+        if (savedOrder) {
+          setDoctorTicketOrders(JSON.parse(savedOrder));
+        }
+      } catch {
+        setDoctorTicketOrders({});
+      }
     }, 0);
 
     return () => window.clearTimeout(timeout);
@@ -450,6 +511,68 @@ export default function CompanyAdminPage() {
     } finally {
       setLoadingTicketId(null);
     }
+  }
+
+  function saveDoctorTicketOrder(doctorId: string, orderedTicketIds: number[]) {
+    setDoctorTicketOrders((currentOrders) => {
+      const nextOrders = {
+        ...currentOrders,
+        [doctorId]: orderedTicketIds,
+      };
+
+      window.localStorage.setItem(
+        getDoctorOrderStorageKey(slug),
+        JSON.stringify(nextOrders)
+      );
+
+      return nextOrders;
+    });
+  }
+
+  function reorderDraggedTicket(targetTicketId: number) {
+    if (!canReorderTickets || draggedTicketId === null) return;
+    if (draggedTicketId === targetTicketId) return;
+
+    const currentTicketIds = visibleTickets.map((ticket) => ticket.id);
+    const fromIndex = currentTicketIds.indexOf(draggedTicketId);
+    const toIndex = currentTicketIds.indexOf(targetTicketId);
+
+    if (fromIndex === -1 || toIndex === -1) return;
+
+    const nextTicketIds = [...currentTicketIds];
+    const [movedTicketId] = nextTicketIds.splice(fromIndex, 1);
+    nextTicketIds.splice(toIndex, 0, movedTicketId);
+
+    saveDoctorTicketOrder(ticketDoctorFilter, nextTicketIds);
+  }
+
+  function handleTicketDragStart(
+    event: DragEvent<HTMLDivElement>,
+    ticketId: number
+  ) {
+    if (!canReorderTickets) return;
+
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", String(ticketId));
+    setDraggedTicketId(ticketId);
+  }
+
+  function handleTicketDragOver(event: DragEvent<HTMLDivElement>) {
+    if (!canReorderTickets || draggedTicketId === null) return;
+
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+  }
+
+  function handleTicketDrop(
+    event: DragEvent<HTMLDivElement>,
+    targetTicketId: number
+  ) {
+    if (!canReorderTickets) return;
+
+    event.preventDefault();
+    reorderDraggedTicket(targetTicketId);
+    setDraggedTicketId(null);
   }
 
   function startEditingName(ticket: Ticket) {
@@ -779,6 +902,11 @@ export default function CompanyAdminPage() {
                   </option>
                 ))}
               </select>
+              {canReorderTickets && (
+                <span className="text-sm font-semibold text-slate-500">
+                  Ziehen zum Sortieren
+                </span>
+              )}
               <button
                 onClick={loadTickets}
                 disabled={isLoadingTickets}
@@ -805,9 +933,28 @@ export default function CompanyAdminPage() {
 
           <div className="divide-y divide-slate-200">
             {visibleTickets.map((ticket) => (
-              <div key={ticket.id} className="px-5 py-4">
-                <div className="grid gap-3 lg:grid-cols-[8.5rem_minmax(0,1fr)_24rem] lg:items-center">
-                  <div className="flex shrink-0">
+              <div
+                key={ticket.id}
+                draggable={canReorderTickets}
+                onDragStart={(event) => handleTicketDragStart(event, ticket.id)}
+                onDragOver={handleTicketDragOver}
+                onDrop={(event) => handleTicketDrop(event, ticket.id)}
+                onDragEnd={() => setDraggedTicketId(null)}
+                className={`px-5 py-4 ${
+                  canReorderTickets ? "cursor-grab active:cursor-grabbing" : ""
+                } ${draggedTicketId === ticket.id ? "opacity-50" : ""}`}
+              >
+                <div className="grid gap-3 lg:grid-cols-[10.5rem_minmax(0,1fr)_24rem] lg:items-center">
+                  <div className="flex shrink-0 items-center gap-2">
+                    {canReorderTickets && (
+                      <span
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500"
+                        title="Ticket verschieben"
+                        aria-hidden="true"
+                      >
+                        <MoveIcon />
+                      </span>
+                    )}
                     <span
                       className={`inline-flex w-32 justify-center rounded-full border px-3 py-1 text-sm font-semibold ${getStatusClass(ticket.status)}`}
                     >
