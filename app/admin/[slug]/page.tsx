@@ -195,6 +195,7 @@ export default function CompanyAdminPage() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [selectedDoctorId, setSelectedDoctorId] = useState("");
   const [ticketDoctorFilter, setTicketDoctorFilter] = useState("all");
+  const [ticketStatusFilter, setTicketStatusFilter] = useState("all");
   const [draggedTicketId, setDraggedTicketId] = useState<number | null>(null);
   const [dragOverTicketId, setDragOverTicketId] = useState<number | null>(null);
   const [pendingTicketOrder, setPendingTicketOrder] = useState<number[] | null>(
@@ -225,7 +226,7 @@ export default function CompanyAdminPage() {
   const calledCount = tickets.filter((ticket) => ticket.status === "called").length;
   const doneCount = tickets.filter((ticket) => ticket.status === "done").length;
   const canReorderTickets = ticketDoctorFilter !== "all";
-  const visibleTickets =
+  const doctorFilteredTickets =
     ticketDoctorFilter === "all"
       ? tickets
       : tickets
@@ -242,6 +243,17 @@ export default function CompanyAdminPage() {
 
             return firstTicket.ticket_number - secondTicket.ticket_number;
           });
+  const visibleTickets = doctorFilteredTickets.filter((ticket) => {
+    if (ticketStatusFilter === "waiting") {
+      return ticket.status === "waiting";
+    }
+
+    if (ticketStatusFilter === "finished") {
+      return ticket.status === "called" || ticket.status === "done";
+    }
+
+    return true;
+  });
 
   const loadTickets = useCallback(async () => {
     setIsLoadingTickets(true);
@@ -432,6 +444,7 @@ export default function CompanyAdminPage() {
     setDoctors([]);
     setSelectedDoctorId("");
     setTicketDoctorFilter("all");
+    setTicketStatusFilter("all");
     setNewTicketNumber(null);
     setNewTicketDoctorName("");
     setMessage("Abgemeldet.");
@@ -562,7 +575,7 @@ export default function CompanyAdminPage() {
     if (!canReorderTickets || draggedTicketId === null) return;
     if (draggedTicketId === targetTicketId) return;
 
-    const currentTicketIds = visibleTickets.map((ticket) => ticket.id);
+    const currentTicketIds = doctorFilteredTickets.map((ticket) => ticket.id);
     const fromIndex = currentTicketIds.indexOf(draggedTicketId);
     const toIndex = currentTicketIds.indexOf(targetTicketId);
 
@@ -980,6 +993,16 @@ export default function CompanyAdminPage() {
                     {doctor.name}
                   </option>
                 ))}
+              </select>
+              <select
+                value={ticketStatusFilter}
+                onChange={(event) => setTicketStatusFilter(event.target.value)}
+                className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
+                aria-label="Ticketliste nach Status filtern"
+              >
+                <option value="all">Alle Status</option>
+                <option value="waiting">Wartend</option>
+                <option value="finished">Aufgerufen & erledigt</option>
               </select>
               {canReorderTickets && (
                 <span className="text-sm font-semibold text-slate-500">
