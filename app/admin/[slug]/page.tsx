@@ -21,6 +21,7 @@ type Company = {
 type Ticket = {
   id: number;
   ticket_number: number;
+  queue_position: number | null;
   ticket_day: string;
   customer_name: string;
   status: string;
@@ -35,10 +36,6 @@ type Doctor = {
   treatment_time_min: number;
   treatment_time_max: number;
 };
-
-function getDoctorOrderStorageKey(slug: string) {
-  return `kurzwarten-doctor-ticket-order-${slug}`;
-}
 
 function getStatusLabel(status: string) {
   if (status === "called") return "Aufgerufen";
@@ -191,9 +188,6 @@ export default function CompanyAdminPage() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [selectedDoctorId, setSelectedDoctorId] = useState("");
   const [ticketDoctorFilter, setTicketDoctorFilter] = useState("all");
-  const [doctorTicketOrders, setDoctorTicketOrders] = useState<
-    Record<string, number[]>
-  >({});
   const [draggedTicketId, setDraggedTicketId] = useState<number | null>(null);
   const [password, setPassword] = useState("");
   const [isUnlocking, setIsUnlocking] = useState(false);
@@ -224,16 +218,14 @@ export default function CompanyAdminPage() {
       : tickets
           .filter((ticket) => ticket.doctor_id === ticketDoctorFilter)
           .sort((firstTicket, secondTicket) => {
-            const currentOrder = doctorTicketOrders[ticketDoctorFilter] ?? [];
-            const firstIndex = currentOrder.indexOf(firstTicket.id);
-            const secondIndex = currentOrder.indexOf(secondTicket.id);
+            const firstPosition =
+              firstTicket.queue_position ?? firstTicket.ticket_number;
+            const secondPosition =
+              secondTicket.queue_position ?? secondTicket.ticket_number;
 
-            if (firstIndex !== -1 && secondIndex !== -1) {
-              return firstIndex - secondIndex;
+            if (firstPosition !== secondPosition) {
+              return firstPosition - secondPosition;
             }
-
-            if (firstIndex !== -1) return -1;
-            if (secondIndex !== -1) return 1;
 
             return firstTicket.ticket_number - secondTicket.ticket_number;
           });
@@ -299,24 +291,6 @@ export default function CompanyAdminPage() {
           light: "#ffffff",
         },
       }).then(setQrCodeUrl);
-    }, 0);
-
-    return () => window.clearTimeout(timeout);
-  }, [slug]);
-
-  useEffect(() => {
-    const timeout = window.setTimeout(() => {
-      try {
-        const savedOrder = window.localStorage.getItem(
-          getDoctorOrderStorageKey(slug)
-        );
-
-        if (savedOrder) {
-          setDoctorTicketOrders(JSON.parse(savedOrder));
-        }
-      } catch {
-        setDoctorTicketOrders({});
-      }
     }, 0);
 
     return () => window.clearTimeout(timeout);
@@ -513,23 +487,7 @@ export default function CompanyAdminPage() {
     }
   }
 
-  function saveDoctorTicketOrder(doctorId: string, orderedTicketIds: number[]) {
-    setDoctorTicketOrders((currentOrders) => {
-      const nextOrders = {
-        ...currentOrders,
-        [doctorId]: orderedTicketIds,
-      };
-
-      window.localStorage.setItem(
-        getDoctorOrderStorageKey(slug),
-        JSON.stringify(nextOrders)
-      );
-
-      return nextOrders;
-    });
-  }
-
-  function reorderDraggedTicket(targetTicketId: number) {
+  async function reorderDraggedTicket(targetTicketId: number) {
     if (!canReorderTickets || draggedTicketId === null) return;
     if (draggedTicketId === targetTicketId) return;
 
@@ -543,7 +501,42 @@ export default function CompanyAdminPage() {
     const [movedTicketId] = nextTicketIds.splice(fromIndex, 1);
     nextTicketIds.splice(toIndex, 0, movedTicketId);
 
-    saveDoctorTicketOrder(ticketDoctorFilter, nextTicketIds);
+    setTickets((currentTickets) =>
+      currentTickets.map((ticket) => {
+        const nextPosition = nextTicketIds.indexOf(ticket.id);
+
+        if (nextPosition === -1) {
+          return ticket;
+        }
+
+        return {
+          ...ticket,
+          queue_position: nextPosition + 1,
+        };
+      })
+    );
+
+    try {
+      const response = await fetch(`/api/company/${slug}/ticket/reorder`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          doctor_id: ticketDoctorFilter,
+          ticket_ids: nextTicketIds,
+        }),
+      });
+      const data = await response.json();
+
+      if (!data.success) {
+        setMessage(data.error ?? "Reihenfolge konnte nicht gespeichert werden.");
+        await loadTickets();
+      }
+    } catch {
+      setMessage("Verbindung fehlgeschlagen. Reihenfolge wurde nicht gespeichert.");
+      await loadTickets();
+    }
   }
 
   function handleTicketDragStart(
@@ -571,7 +564,7 @@ export default function CompanyAdminPage() {
     if (!canReorderTickets) return;
 
     event.preventDefault();
-    reorderDraggedTicket(targetTicketId);
+    void reorderDraggedTicket(targetTicketId);
     setDraggedTicketId(null);
   }
 
