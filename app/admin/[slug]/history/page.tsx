@@ -197,6 +197,12 @@ export default function CompanyHistoryPage() {
                 setPassword(event.target.value);
                 setMessage("");
               }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && password.trim()) {
+                  event.preventDefault();
+                  void unlockHistory();
+                }
+              }}
               className="mt-2 h-14 w-full rounded-lg border border-slate-300 bg-white px-4 text-lg text-slate-950"
               disabled={
                 isLoadingCompany ||

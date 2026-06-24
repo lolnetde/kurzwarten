@@ -223,6 +223,12 @@ export default function HomePage() {
                 setLoginName(event.target.value);
                 setLoginMessage("");
               }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && canOpenCompany) {
+                  event.preventDefault();
+                  void openCompany();
+                }
+              }}
               className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-slate-950"
               placeholder="z. B. Hausarzt Müller"
             />
@@ -261,6 +267,12 @@ export default function HomePage() {
                 setCompanyName(event.target.value);
                 setMessage("");
               }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && canCreateCompany) {
+                  event.preventDefault();
+                  void createCompany();
+                }
+              }}
               className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-slate-950"
               maxLength={MAX_COMPANY_NAME_LENGTH}
               placeholder="Name der Praxis"
@@ -274,6 +286,12 @@ export default function HomePage() {
               onChange={(event) => {
                 setCompanyPassword(event.target.value);
                 setMessage("");
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && canCreateCompany) {
+                  event.preventDefault();
+                  void createCompany();
+                }
               }}
               className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-slate-950"
               placeholder="Mindestens 4 Zeichen"

@@ -147,6 +147,12 @@ export default function WartenOverviewPage() {
               setCompanyName(event.target.value);
               setMessage("");
             }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && canOpenCompany) {
+                event.preventDefault();
+                void openCompanyQueue();
+              }
+            }}
             className="mt-2 h-14 w-full rounded-lg border border-slate-300 bg-white px-4 text-lg text-slate-950"
             placeholder="z. B. Köln Hausarzt Jo oder 50667"
           />

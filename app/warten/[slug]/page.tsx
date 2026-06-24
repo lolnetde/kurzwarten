@@ -57,7 +57,7 @@ export default function CompanyWartenPage() {
         setCompany(data.company);
         setMessage("");
 
-        if (data.ticket.status === "done") {
+        if (data.ticket.status === "done" || data.ticket.status === "deleted") {
           window.localStorage.removeItem(getSavedTicketKey(slug));
         }
 
@@ -137,6 +137,7 @@ export default function CompanyWartenPage() {
 
   useEffect(() => {
     if (!ticket?.ticket_number) return;
+    if (ticket.status === "done" || ticket.status === "deleted") return;
 
     const ticketNumber = ticket.ticket_number;
 
@@ -145,7 +146,7 @@ export default function CompanyWartenPage() {
     }, 3000);
 
     return () => window.clearInterval(interval);
-  }, [loadTicketStatus, ticket?.ticket_number]);
+  }, [loadTicketStatus, ticket?.ticket_number, ticket?.status]);
 
   return (
     <main className="min-h-[calc(100vh-73px)] bg-[#f5f7fb] text-slate-950">
@@ -180,6 +181,12 @@ export default function CompanyWartenPage() {
                   onChange={(event) => {
                     setTicketNumber(event.target.value.replace(/\D/g, ""));
                     setMessage("");
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && canOpenTicket) {
+                      event.preventDefault();
+                      void openTicket();
+                    }
                   }}
                   className="mt-2 h-14 w-full rounded-lg border border-slate-300 bg-white px-4 text-lg text-slate-950"
                   inputMode="numeric"
@@ -220,6 +227,8 @@ export default function CompanyWartenPage() {
                         ? "Aufgerufen"
                         : ticket.status === "done"
                           ? "Erledigt"
+                          : ticket.status === "deleted"
+                            ? "Gelöscht"
                           : "Wartet"}
                     </p>
                   </div>
@@ -275,6 +284,18 @@ export default function CompanyWartenPage() {
                   <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-5">
                     <p className="text-2xl font-bold text-slate-900">
                       Dein Ticket wurde abgeschlossen.
+                    </p>
+                  </div>
+                )}
+
+                {ticket.status === "deleted" && (
+                  <div className="mt-5 rounded-lg border border-red-200 bg-red-50 p-5">
+                    <p className="text-2xl font-bold text-red-900">
+                      Ihr Ticket wurde gelöscht.
+                    </p>
+                    <p className="mt-2 text-lg leading-8 text-red-800">
+                      Bitte frage in der Praxis nach oder gib eine andere
+                      Ticketnummer ein.
                     </p>
                   </div>
                 )}
