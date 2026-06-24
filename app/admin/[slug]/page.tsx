@@ -806,7 +806,7 @@ export default function CompanyAdminPage() {
           <div className="divide-y divide-slate-200">
             {visibleTickets.map((ticket) => (
               <div key={ticket.id} className="px-5 py-4">
-                <div className="grid gap-3 lg:grid-cols-[8.5rem_minmax(0,1fr)_22rem] lg:items-center">
+                <div className="grid gap-3 lg:grid-cols-[8.5rem_minmax(0,1fr)_24rem] lg:items-center">
                   <div className="flex shrink-0">
                     <span
                       className={`inline-flex w-32 justify-center rounded-full border px-3 py-1 text-sm font-semibold ${getStatusClass(ticket.status)}`}
@@ -835,7 +835,7 @@ export default function CompanyAdminPage() {
                     </span>
                     </p>
                   </div>
-                  <div className="flex w-full shrink-0 flex-wrap items-center justify-start gap-2 lg:w-[22rem] lg:justify-end">
+                  <div className="flex w-full shrink-0 flex-wrap items-center justify-start gap-2 lg:w-[24rem] lg:flex-nowrap lg:justify-end">
                     {editingNameTicketId !== ticket.id && (
                     <button
                       onClick={() => startEditingName(ticket)}
