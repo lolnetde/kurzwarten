@@ -558,16 +558,27 @@ export default function CompanyAdminPage() {
     setPendingTicketOrder(nextTicketIds);
   }
 
-  function previewDraggedTicketOrder(targetTicketId: number) {
+  function previewDraggedTicketOrder(targetTicketId: number, pointerY: number) {
     if (!canReorderTickets || draggedTicketId === null) return;
     if (draggedTicketId === targetTicketId) return;
-    if (dragOverTicketId === targetTicketId) return;
 
     const currentTicketIds = visibleTickets.map((ticket) => ticket.id);
     const fromIndex = currentTicketIds.indexOf(draggedTicketId);
     const toIndex = currentTicketIds.indexOf(targetTicketId);
 
     if (fromIndex === -1 || toIndex === -1) return;
+
+    const targetElement = ticketRowRefs.current.get(targetTicketId);
+
+    if (!targetElement) return;
+
+    const targetRect = targetElement.getBoundingClientRect();
+    const targetMiddle = targetRect.top + targetRect.height / 2;
+    const isMovingDown = fromIndex < toIndex;
+    const isMovingUp = fromIndex > toIndex;
+
+    if (isMovingDown && pointerY < targetMiddle) return;
+    if (isMovingUp && pointerY > targetMiddle) return;
 
     const nextTicketIds = [...currentTicketIds];
     const [movedTicketId] = nextTicketIds.splice(fromIndex, 1);
@@ -626,21 +637,15 @@ export default function CompanyAdminPage() {
     setPendingTicketOrder(null);
   }
 
-  function handleTicketDragOver(event: DragEvent<HTMLDivElement>) {
-    if (!canReorderTickets || draggedTicketId === null) return;
-
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
-  }
-
-  function handleTicketDragEnter(
+  function handleTicketDragOver(
     event: DragEvent<HTMLDivElement>,
     targetTicketId: number
   ) {
     if (!canReorderTickets || draggedTicketId === null) return;
 
     event.preventDefault();
-    previewDraggedTicketOrder(targetTicketId);
+    event.dataTransfer.dropEffect = "move";
+    previewDraggedTicketOrder(targetTicketId, event.clientY);
   }
 
   function handleTicketDrop(event: DragEvent<HTMLDivElement>) {
@@ -1018,8 +1023,7 @@ export default function CompanyAdminPage() {
                 }}
                 draggable={canReorderTickets}
                 onDragStart={(event) => handleTicketDragStart(event, ticket.id)}
-                onDragEnter={(event) => handleTicketDragEnter(event, ticket.id)}
-                onDragOver={handleTicketDragOver}
+                onDragOver={(event) => handleTicketDragOver(event, ticket.id)}
                 onDrop={handleTicketDrop}
                 onDragEnd={() => void finishTicketReorder()}
                 className={`transform-gpu px-5 py-4 transition-[background-color,box-shadow,opacity,transform] duration-200 ease-out ${
