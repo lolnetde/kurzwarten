@@ -6,7 +6,14 @@ import {
   getSavedAdminPassword,
   saveAdminPassword,
 } from "@/lib/admin-session";
-import { useCallback, useEffect, useState, type DragEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type DragEvent,
+} from "react";
 import { useParams } from "next/navigation";
 
 type Company = {
@@ -189,6 +196,10 @@ export default function CompanyAdminPage() {
   const [selectedDoctorId, setSelectedDoctorId] = useState("");
   const [ticketDoctorFilter, setTicketDoctorFilter] = useState("all");
   const [draggedTicketId, setDraggedTicketId] = useState<number | null>(null);
+  const [dragOverTicketId, setDragOverTicketId] = useState<number | null>(null);
+  const [pendingTicketOrder, setPendingTicketOrder] = useState<number[] | null>(
+    null
+  );
   const [password, setPassword] = useState("");
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(false);
@@ -207,6 +218,8 @@ export default function CompanyAdminPage() {
   const [newTicketDoctorName, setNewTicketDoctorName] = useState("");
   const [queueUrl, setQueueUrl] = useState("");
   const [qrCodeUrl, setQrCodeUrl] = useState("");
+  const ticketRowRefs = useRef(new Map<number, HTMLDivElement>());
+  const previousTicketRects = useRef(new Map<number, DOMRect>());
 
   const waitingCount = tickets.filter((ticket) => ticket.status === "waiting").length;
   const calledCount = tickets.filter((ticket) => ticket.status === "called").length;
@@ -249,6 +262,34 @@ export default function CompanyAdminPage() {
       setIsLoadingTickets(false);
     }
   }, [slug]);
+
+  useLayoutEffect(() => {
+    if (previousTicketRects.current.size === 0) return;
+
+    ticketRowRefs.current.forEach((element, ticketId) => {
+      const previousRect = previousTicketRects.current.get(ticketId);
+
+      if (!previousRect) return;
+
+      const nextRect = element.getBoundingClientRect();
+      const deltaY = previousRect.top - nextRect.top;
+
+      if (Math.abs(deltaY) < 1) return;
+
+      element.animate(
+        [
+          { transform: `translateY(${deltaY}px)` },
+          { transform: "translateY(0)" },
+        ],
+        {
+          duration: 180,
+          easing: "cubic-bezier(0.2, 0, 0, 1)",
+        }
+      );
+    });
+
+    previousTicketRects.current = new Map();
+  }, [visibleTickets]);
 
   const loadDoctors = useCallback(async () => {
     try {
@@ -487,19 +528,18 @@ export default function CompanyAdminPage() {
     }
   }
 
-  async function reorderDraggedTicket(targetTicketId: number) {
-    if (!canReorderTickets || draggedTicketId === null) return;
-    if (draggedTicketId === targetTicketId) return;
+  function rememberTicketRowPositions() {
+    const currentRects = new Map<number, DOMRect>();
 
-    const currentTicketIds = visibleTickets.map((ticket) => ticket.id);
-    const fromIndex = currentTicketIds.indexOf(draggedTicketId);
-    const toIndex = currentTicketIds.indexOf(targetTicketId);
+    ticketRowRefs.current.forEach((element, ticketId) => {
+      currentRects.set(ticketId, element.getBoundingClientRect());
+    });
 
-    if (fromIndex === -1 || toIndex === -1) return;
+    previousTicketRects.current = currentRects;
+  }
 
-    const nextTicketIds = [...currentTicketIds];
-    const [movedTicketId] = nextTicketIds.splice(fromIndex, 1);
-    nextTicketIds.splice(toIndex, 0, movedTicketId);
+  function applyTicketOrderPreview(nextTicketIds: number[]) {
+    rememberTicketRowPositions();
 
     setTickets((currentTickets) =>
       currentTickets.map((ticket) => {
@@ -515,7 +555,29 @@ export default function CompanyAdminPage() {
         };
       })
     );
+    setPendingTicketOrder(nextTicketIds);
+  }
 
+  function previewDraggedTicketOrder(targetTicketId: number) {
+    if (!canReorderTickets || draggedTicketId === null) return;
+    if (draggedTicketId === targetTicketId) return;
+    if (dragOverTicketId === targetTicketId) return;
+
+    const currentTicketIds = visibleTickets.map((ticket) => ticket.id);
+    const fromIndex = currentTicketIds.indexOf(draggedTicketId);
+    const toIndex = currentTicketIds.indexOf(targetTicketId);
+
+    if (fromIndex === -1 || toIndex === -1) return;
+
+    const nextTicketIds = [...currentTicketIds];
+    const [movedTicketId] = nextTicketIds.splice(fromIndex, 1);
+    nextTicketIds.splice(toIndex, 0, movedTicketId);
+
+    applyTicketOrderPreview(nextTicketIds);
+    setDragOverTicketId(targetTicketId);
+  }
+
+  async function saveTicketOrder(ticketIds: number[]) {
     try {
       const response = await fetch(`/api/company/${slug}/ticket/reorder`, {
         method: "PATCH",
@@ -524,7 +586,7 @@ export default function CompanyAdminPage() {
         },
         body: JSON.stringify({
           doctor_id: ticketDoctorFilter,
-          ticket_ids: nextTicketIds,
+          ticket_ids: ticketIds,
         }),
       });
       const data = await response.json();
@@ -539,6 +601,18 @@ export default function CompanyAdminPage() {
     }
   }
 
+  async function finishTicketReorder() {
+    const finalTicketOrder = pendingTicketOrder;
+
+    setDraggedTicketId(null);
+    setDragOverTicketId(null);
+    setPendingTicketOrder(null);
+
+    if (!canReorderTickets || !finalTicketOrder) return;
+
+    await saveTicketOrder(finalTicketOrder);
+  }
+
   function handleTicketDragStart(
     event: DragEvent<HTMLDivElement>,
     ticketId: number
@@ -548,6 +622,8 @@ export default function CompanyAdminPage() {
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData("text/plain", String(ticketId));
     setDraggedTicketId(ticketId);
+    setDragOverTicketId(null);
+    setPendingTicketOrder(null);
   }
 
   function handleTicketDragOver(event: DragEvent<HTMLDivElement>) {
@@ -557,15 +633,20 @@ export default function CompanyAdminPage() {
     event.dataTransfer.dropEffect = "move";
   }
 
-  function handleTicketDrop(
+  function handleTicketDragEnter(
     event: DragEvent<HTMLDivElement>,
     targetTicketId: number
   ) {
+    if (!canReorderTickets || draggedTicketId === null) return;
+
+    event.preventDefault();
+    previewDraggedTicketOrder(targetTicketId);
+  }
+
+  function handleTicketDrop(event: DragEvent<HTMLDivElement>) {
     if (!canReorderTickets) return;
 
     event.preventDefault();
-    void reorderDraggedTicket(targetTicketId);
-    setDraggedTicketId(null);
   }
 
   function startEditingName(ticket: Ticket) {
@@ -928,14 +1009,30 @@ export default function CompanyAdminPage() {
             {visibleTickets.map((ticket) => (
               <div
                 key={ticket.id}
+                ref={(element) => {
+                  if (element) {
+                    ticketRowRefs.current.set(ticket.id, element);
+                  } else {
+                    ticketRowRefs.current.delete(ticket.id);
+                  }
+                }}
                 draggable={canReorderTickets}
                 onDragStart={(event) => handleTicketDragStart(event, ticket.id)}
+                onDragEnter={(event) => handleTicketDragEnter(event, ticket.id)}
                 onDragOver={handleTicketDragOver}
-                onDrop={(event) => handleTicketDrop(event, ticket.id)}
-                onDragEnd={() => setDraggedTicketId(null)}
-                className={`px-5 py-4 ${
+                onDrop={handleTicketDrop}
+                onDragEnd={() => void finishTicketReorder()}
+                className={`transform-gpu px-5 py-4 transition-[background-color,box-shadow,opacity,transform] duration-200 ease-out ${
                   canReorderTickets ? "cursor-grab active:cursor-grabbing" : ""
-                } ${draggedTicketId === ticket.id ? "opacity-50" : ""}`}
+                } ${
+                  draggedTicketId === ticket.id
+                    ? "scale-[0.99] bg-blue-50 opacity-70 shadow-sm ring-1 ring-blue-200"
+                    : ""
+                } ${
+                  dragOverTicketId === ticket.id && draggedTicketId !== ticket.id
+                    ? "bg-slate-50"
+                    : ""
+                }`}
               >
                 <div className="grid gap-3 lg:grid-cols-[10.5rem_minmax(0,1fr)_24rem] lg:items-center">
                   <div className="flex shrink-0 items-center gap-2">
