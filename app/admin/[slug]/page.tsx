@@ -88,6 +88,32 @@ function RefreshIcon({ isLoading }: { isLoading: boolean }) {
   );
 }
 
+function NameIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-4 w-4"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <path
+        d="M15.8 11.2a4 4 0 1 0-7.6 0"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+      <path
+        d="M4.8 20a7.2 7.2 0 0 1 14.4 0"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+}
+
 export default function CompanyAdminPage() {
   const params = useParams<{ slug: string }>();
   const slug = params.slug;
@@ -105,6 +131,11 @@ export default function CompanyAdminPage() {
   const [isLoadingTickets, setIsLoadingTickets] = useState(false);
   const [isCreatingTicket, setIsCreatingTicket] = useState(false);
   const [loadingTicketId, setLoadingTicketId] = useState<number | null>(null);
+  const [editingNameTicketId, setEditingNameTicketId] = useState<number | null>(
+    null
+  );
+  const [nameDraft, setNameDraft] = useState("");
+  const [isSavingName, setIsSavingName] = useState(false);
   const [newTicketNumber, setNewTicketNumber] = useState<number | null>(null);
   const [newTicketDoctorName, setNewTicketDoctorName] = useState("");
   const [queueUrl, setQueueUrl] = useState("");
@@ -366,6 +397,65 @@ export default function CompanyAdminPage() {
     } catch {
       setMessage("Verbindung fehlgeschlagen. Ticket wurde nicht entfernt.");
     } finally {
+      setLoadingTicketId(null);
+    }
+  }
+
+  function startEditingName(ticket: Ticket) {
+    setEditingNameTicketId(ticket.id);
+    setNameDraft(ticket.customer_name === "Vor Ort" ? "" : ticket.customer_name);
+    setMessage("");
+  }
+
+  function cancelEditingName() {
+    setEditingNameTicketId(null);
+    setNameDraft("");
+  }
+
+  async function saveTicketName(ticketId: number) {
+    const trimmedName = nameDraft.trim();
+    setMessage("");
+
+    if (!trimmedName) {
+      setMessage("Bitte gib einen Namen ein.");
+      return;
+    }
+
+    if (trimmedName.length > 80) {
+      setMessage("Der Name darf maximal 80 Zeichen lang sein.");
+      return;
+    }
+
+    setIsSavingName(true);
+    setLoadingTicketId(ticketId);
+
+    try {
+      const response = await fetch(`/api/company/${slug}/ticket/name`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: ticketId, customer_name: trimmedName }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setTickets((currentTickets) =>
+          currentTickets.map((ticket) =>
+            ticket.id === ticketId
+              ? { ...ticket, customer_name: trimmedName }
+              : ticket
+          )
+        );
+        cancelEditingName();
+      } else {
+        setMessage(data.error ?? "Name konnte nicht gespeichert werden.");
+      }
+    } catch {
+      setMessage("Verbindung fehlgeschlagen. Name wurde nicht gespeichert.");
+    } finally {
+      setIsSavingName(false);
       setLoadingTicketId(null);
     }
   }
@@ -662,6 +752,64 @@ export default function CompanyAdminPage() {
                       {getStatusLabel(ticket.status)}
                     </span>
                   </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <p className="text-sm text-slate-500">
+                      {ticket.customer_name && ticket.customer_name !== "Vor Ort"
+                        ? `Name: ${ticket.customer_name}`
+                        : "Kein Name hinterlegt"}
+                    </p>
+                    {editingNameTicketId !== ticket.id && (
+                      <button
+                        onClick={() => startEditingName(ticket)}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-800"
+                      >
+                        <NameIcon />
+                        {ticket.customer_name && ticket.customer_name !== "Vor Ort"
+                          ? "Name ändern"
+                          : "Name hinzufügen"}
+                      </button>
+                    )}
+                  </div>
+                  {editingNameTicketId === ticket.id && (
+                    <div className="mt-3 flex max-w-xl flex-col gap-2 sm:flex-row">
+                      <input
+                        value={nameDraft}
+                        onChange={(event) => {
+                          setNameDraft(event.target.value);
+                          setMessage("");
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            event.preventDefault();
+                            void saveTicketName(ticket.id);
+                          }
+
+                          if (event.key === "Escape") {
+                            event.preventDefault();
+                            cancelEditingName();
+                          }
+                        }}
+                        className="h-11 min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 text-slate-950"
+                        maxLength={80}
+                        placeholder="Name der Person"
+                        autoFocus
+                      />
+                      <button
+                        onClick={() => saveTicketName(ticket.id)}
+                        disabled={isSavingName || !nameDraft.trim()}
+                        className="h-11 rounded-lg bg-blue-700 px-4 font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
+                      >
+                        Speichern
+                      </button>
+                      <button
+                        onClick={cancelEditingName}
+                        disabled={isSavingName}
+                        className="h-11 rounded-lg border border-slate-300 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Abbrechen
+                      </button>
+                    </div>
+                  )}
                   <p className="mt-1 text-sm text-slate-500">
                     {ticket.doctors
                       ? `Zugeordnet: ${ticket.doctors.name}`
