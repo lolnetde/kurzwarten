@@ -5,6 +5,7 @@ import {
   getSavedAdminPassword,
   saveAdminPassword,
 } from "@/lib/admin-session";
+import { ButtonSpinner, PanelSkeleton } from "@/components/LoadingStates";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 
@@ -327,6 +328,9 @@ export default function CompanySettingsPage() {
     return (
       <main className="min-h-[calc(100vh-73px)] bg-[#f5f7fb] text-slate-950">
         <section className="mx-auto flex min-h-[calc(100vh-73px)] max-w-xl flex-col justify-center px-5 py-10">
+          {(isLoading || isCheckingSavedLogin) && !company ? (
+            <PanelSkeleton />
+          ) : (
           <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
             <p className="text-sm font-semibold text-blue-700">
               {company?.name ?? "KurzWarten"}
@@ -377,9 +381,14 @@ export default function CompanySettingsPage() {
               }
               className="mt-5 h-14 w-full rounded-lg bg-blue-700 px-6 text-lg font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
             >
-              {isLoading || isUnlocking || isCheckingSavedLogin
-                ? "Wird geprueft..."
-                : "Einstellungen oeffnen"}
+              {isLoading || isUnlocking || isCheckingSavedLogin ? (
+                <span className="inline-flex items-center justify-center gap-2">
+                  <ButtonSpinner />
+                  Wird geprüft...
+                </span>
+              ) : (
+                "Einstellungen öffnen"
+              )}
             </button>
 
             <a
@@ -401,6 +410,7 @@ export default function CompanySettingsPage() {
               </p>
             )}
           </div>
+          )}
         </section>
       </main>
     );
@@ -625,7 +635,14 @@ export default function CompanySettingsPage() {
               disabled={isSaving || !company}
               className="h-12 rounded-lg bg-blue-700 px-5 font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
             >
-              {isSaving ? "Speichert..." : "Einstellungen speichern"}
+              {isSaving ? (
+                <span className="inline-flex items-center justify-center gap-2">
+                  <ButtonSpinner />
+                  Speichert...
+                </span>
+              ) : (
+                "Einstellungen speichern"
+              )}
             </button>
           </div>
 

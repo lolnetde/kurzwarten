@@ -5,6 +5,7 @@ import {
   getSavedAdminPassword,
   saveAdminPassword,
 } from "@/lib/admin-session";
+import { ButtonSpinner, HistorySkeleton, PanelSkeleton } from "@/components/LoadingStates";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
@@ -175,6 +176,9 @@ export default function CompanyHistoryPage() {
     return (
       <main className="min-h-[calc(100vh-73px)] bg-[#f5f7fb] text-slate-950">
         <section className="mx-auto flex min-h-[calc(100vh-73px)] max-w-xl flex-col justify-center px-5 py-10">
+          {(isLoadingCompany || isCheckingSavedLogin) && !company ? (
+            <PanelSkeleton />
+          ) : (
           <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
             <p className="text-sm font-semibold text-blue-700">
               {company?.name ?? "KurzWarten"}
@@ -225,9 +229,14 @@ export default function CompanyHistoryPage() {
               }
               className="mt-5 h-14 w-full rounded-lg bg-blue-700 px-6 text-lg font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
             >
-              {isLoadingCompany || isUnlocking || isCheckingSavedLogin
-                ? "Wird geprueft..."
-                : "Statistiken oeffnen"}
+              {isLoadingCompany || isUnlocking || isCheckingSavedLogin ? (
+                <span className="inline-flex items-center justify-center gap-2">
+                  <ButtonSpinner />
+                  Wird geprüft...
+                </span>
+              ) : (
+                "Statistiken öffnen"
+              )}
             </button>
 
             <a
@@ -243,6 +252,7 @@ export default function CompanyHistoryPage() {
               </p>
             )}
           </div>
+          )}
         </section>
       </main>
     );
@@ -274,9 +284,17 @@ export default function CompanyHistoryPage() {
             </a>
             <button
               onClick={() => loadHistory(password)}
+              disabled={isLoadingHistory}
               className="rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white hover:bg-blue-800"
             >
-              Aktualisieren
+              {isLoadingHistory ? (
+                <span className="inline-flex items-center justify-center gap-2">
+                  <ButtonSpinner />
+                  Aktualisiert...
+                </span>
+              ) : (
+                "Aktualisieren"
+              )}
             </button>
             <button
               onClick={logoutAdmin}
@@ -318,7 +336,7 @@ export default function CompanyHistoryPage() {
           </div>
 
           {isLoadingHistory && (
-            <p className="p-5 text-slate-600">Statistiken werden geladen...</p>
+            <HistorySkeleton />
           )}
 
           {!isLoadingHistory && history.length === 0 && (

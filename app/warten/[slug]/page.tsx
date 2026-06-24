@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { ButtonSpinner, PanelSkeleton } from "@/components/LoadingStates";
 
 type Company = {
   id: string;
@@ -152,9 +153,7 @@ export default function CompanyWartenPage() {
     <main className="min-h-[calc(100vh-73px)] bg-[#f5f7fb] text-slate-950">
       <section className="mx-auto flex min-h-[calc(100vh-73px)] max-w-2xl flex-col justify-center px-5 py-10">
         {isLoadingCompany && (
-          <p className="rounded-lg border border-slate-200 bg-white p-5 text-slate-600 shadow-sm">
-            Warteschlange wird geladen...
-          </p>
+          <PanelSkeleton />
         )}
 
         {!isLoadingCompany && company && (
@@ -198,7 +197,14 @@ export default function CompanyWartenPage() {
                   disabled={!canOpenTicket}
                   className="mt-5 h-14 w-full rounded-lg bg-blue-700 px-6 text-lg font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
                 >
-                  {isLoadingTicket ? "Ticket wird gesucht..." : "Ticket anzeigen"}
+                  {isLoadingTicket ? (
+                    <span className="inline-flex items-center justify-center gap-2">
+                      <ButtonSpinner />
+                      Ticket wird gesucht...
+                    </span>
+                  ) : (
+                    "Ticket anzeigen"
+                  )}
                 </button>
               </>
             )}

@@ -6,6 +6,7 @@ import {
   getSavedAdminPassword,
   saveAdminPassword,
 } from "@/lib/admin-session";
+import { ButtonSpinner, PanelSkeleton, TicketListSkeleton } from "@/components/LoadingStates";
 import {
   useCallback,
   useEffect,
@@ -730,6 +731,9 @@ export default function CompanyAdminPage() {
     return (
       <main className="min-h-[calc(100vh-73px)] bg-[#f5f7fb] text-slate-950">
         <section className="mx-auto flex min-h-[calc(100vh-73px)] max-w-xl flex-col justify-center px-5 py-10">
+          {(isLoadingCompany || isCheckingSavedLogin) && !company ? (
+            <PanelSkeleton />
+          ) : (
           <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
             <p className="text-sm font-semibold text-blue-700">
               {company?.name ?? "KurzWarten"}
@@ -780,7 +784,14 @@ export default function CompanyAdminPage() {
               }
               className="mt-5 h-14 w-full rounded-lg bg-blue-700 px-6 text-lg font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
             >
-              {isLoadingCompany || isUnlocking ? "Wird geprüft..." : "Dashboard öffnen"}
+              {isLoadingCompany || isUnlocking ? (
+                <span className="inline-flex items-center justify-center gap-2">
+                  <ButtonSpinner />
+                  Wird geprüft...
+                </span>
+              ) : (
+                "Dashboard öffnen"
+              )}
             </button>
 
             {message && (
@@ -789,6 +800,7 @@ export default function CompanyAdminPage() {
               </p>
             )}
           </div>
+          )}
         </section>
       </main>
     );
@@ -896,7 +908,14 @@ export default function CompanyAdminPage() {
               disabled={isCreatingTicket || doctors.length === 0}
               className="mt-4 h-14 w-full rounded-lg bg-blue-700 px-5 text-lg font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
             >
-              {isCreatingTicket ? "Ticket wird erstellt..." : "Ticket erstellen"}
+              {isCreatingTicket ? (
+                <span className="inline-flex items-center justify-center gap-2">
+                  <ButtonSpinner />
+                  Ticket wird erstellt...
+                </span>
+              ) : (
+                "Ticket erstellen"
+              )}
             </button>
 
             {newTicketNumber && (
@@ -1022,7 +1041,7 @@ export default function CompanyAdminPage() {
           </div>
 
           {isLoadingTickets && (
-            <p className="p-5 text-slate-600">Tickets werden geladen...</p>
+            <TicketListSkeleton />
           )}
 
           {!isLoadingTickets && visibleTickets.length === 0 && (
@@ -1116,7 +1135,13 @@ export default function CompanyAdminPage() {
                     disabled={loadingTicketId === ticket.id}
                     className="w-28 rounded-lg bg-amber-400 px-4 py-2 font-semibold text-slate-950 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    Aufrufen
+                    {loadingTicketId === ticket.id ? (
+                      <span className="inline-flex items-center justify-center">
+                        <ButtonSpinner />
+                      </span>
+                    ) : (
+                      "Aufrufen"
+                    )}
                     </button>
 
                     <button
@@ -1126,7 +1151,7 @@ export default function CompanyAdminPage() {
                     aria-label={`Ticket ${ticket.ticket_number} erledigen`}
                     className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-800 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <CheckIcon />
+                    {loadingTicketId === ticket.id ? <ButtonSpinner /> : <CheckIcon />}
                     </button>
 
                     <button
@@ -1136,7 +1161,7 @@ export default function CompanyAdminPage() {
                     aria-label={`Ticket ${ticket.ticket_number} entfernen`}
                     className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <TrashIcon />
+                    {loadingTicketId === ticket.id ? <ButtonSpinner /> : <TrashIcon />}
                     </button>
                   </div>
                 </div>

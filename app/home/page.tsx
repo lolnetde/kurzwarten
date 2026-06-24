@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useState } from "react";
 import QrScanner from "@/components/QrScanner";
+import { ButtonSpinner } from "@/components/LoadingStates";
 
 type Company = {
   id: string;
@@ -238,7 +239,14 @@ export default function HomePage() {
               disabled={!canOpenCompany}
               className="mt-5 h-12 w-full rounded-lg bg-blue-700 px-5 font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
             >
-              {isLoggingIn ? "Wird geöffnet..." : "Weiter zum Adminbereich"}
+              {isLoggingIn ? (
+                <span className="inline-flex items-center justify-center gap-2">
+                  <ButtonSpinner />
+                  Wird geöffnet...
+                </span>
+              ) : (
+                "Weiter zum Adminbereich"
+              )}
             </button>
 
             {loginMessage && (
@@ -320,7 +328,14 @@ export default function HomePage() {
               disabled={!canCreateCompany}
               className="mt-5 h-12 w-full rounded-lg bg-emerald-700 px-5 font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
             >
-              {isCreating ? "Konto wird erstellt..." : "Konto erstellen"}
+              {isCreating ? (
+                <span className="inline-flex items-center justify-center gap-2">
+                  <ButtonSpinner />
+                  Konto wird erstellt...
+                </span>
+              ) : (
+                "Konto erstellen"
+              )}
             </button>
 
             {message && (
