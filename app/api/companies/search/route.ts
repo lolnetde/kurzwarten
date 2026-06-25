@@ -1,5 +1,10 @@
 import { supabase } from "@/lib/supabase";
+import { getCompanyEnvironmentCopy } from "@/lib/company-environments";
 import { NextResponse } from "next/server";
+
+function isMissingEnvironmentError(error: { message?: string } | null) {
+  return error?.message?.toLowerCase().includes("environment_type") ?? false;
+}
 
 type CompanySearchRow = {
   id: string;
@@ -8,6 +13,7 @@ type CompanySearchRow = {
   address: string | null;
   postal_code: string | null;
   city: string | null;
+  environment_type: string | null;
 };
 
 export async function GET(request: Request) {
@@ -23,11 +29,26 @@ export async function GET(request: Request) {
     .split(/\s+/)
     .filter(Boolean);
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("companies")
-    .select("id, name, slug, address, postal_code, city")
+    .select("id, name, slug, address, postal_code, city, environment_type")
     .order("name", { ascending: true })
     .limit(100);
+
+  if (isMissingEnvironmentError(error)) {
+    const fallbackResult = await supabase
+      .from("companies")
+      .select("id, name, slug, address, postal_code, city")
+      .order("name", { ascending: true })
+      .limit(100);
+
+    data =
+      fallbackResult.data?.map((company) => ({
+        ...company,
+        environment_type: null,
+      })) ?? null;
+    error = fallbackResult.error;
+  }
 
   if (error) {
     return NextResponse.json(
@@ -38,11 +59,17 @@ export async function GET(request: Request) {
 
   const companies = ((data as CompanySearchRow[] | null) ?? [])
     .filter((company) => {
+      const environmentCopy = getCompanyEnvironmentCopy(company.environment_type);
       const searchableText = [
         company.name,
         company.address,
         company.postal_code,
         company.city,
+        environmentCopy.label,
+        environmentCopy.organizationLabel,
+        environmentCopy.workerSingular,
+        environmentCopy.workerPlural,
+        environmentCopy.customerGroup,
       ]
         .filter(Boolean)
         .join(" ")

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import QrScanner from "@/components/QrScanner";
+import { getCompanyEnvironmentCopy } from "@/lib/company-environments";
 
 type CompanySuggestion = {
   id: string;
@@ -11,6 +12,7 @@ type CompanySuggestion = {
   address: string | null;
   postal_code: string | null;
   city: string | null;
+  environment_type: string | null;
 };
 
 function formatCompanyLocation(company: CompanySuggestion) {
@@ -121,7 +123,7 @@ export default function WartenOverviewPage() {
             Warteschlange finden
           </h1>
           <p className="mt-4 text-lg leading-8 text-slate-600">
-            Scanne den QR-Code vor Ort oder suche nach Name, Adresse,
+            Scanne den QR-Code vor Ort oder suche nach Name, Bereich, Adresse,
             Postleitzahl oder Stadt.
           </p>
 
@@ -154,13 +156,16 @@ export default function WartenOverviewPage() {
               }
             }}
             className="mt-2 h-14 w-full rounded-lg border border-slate-300 bg-white px-4 text-lg text-slate-950"
-            placeholder="z. B. Köln, Müller oder 50667"
+            placeholder="z. B. Friseur Köln, Amt Mitte oder 50667"
           />
 
           {suggestions.length > 0 && (
             <div className="mt-2 overflow-hidden rounded-lg border border-slate-200 bg-white">
               {suggestions.map((company) => {
                 const location = formatCompanyLocation(company);
+                const environmentCopy = getCompanyEnvironmentCopy(
+                  company.environment_type
+                );
 
                 return (
                   <button
@@ -172,6 +177,9 @@ export default function WartenOverviewPage() {
                   >
                     <span className="block font-semibold text-slate-950">
                       {company.name}
+                    </span>
+                    <span className="mt-1 inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                      {environmentCopy.label}
                     </span>
                     {location && (
                       <span className="mt-1 block text-sm text-slate-500">
