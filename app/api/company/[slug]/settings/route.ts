@@ -1,4 +1,8 @@
 import { hasSupabaseServerKey, supabaseServer } from "@/lib/supabase-server";
+import {
+  DEFAULT_WAIT_TIME_DISCLAIMER,
+  MAX_WAIT_TIME_DISCLAIMER_LENGTH,
+} from "@/lib/wait-time-disclaimer";
 import { NextResponse } from "next/server";
 
 type RouteParams = {
@@ -19,6 +23,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     address?: unknown;
     postal_code?: unknown;
     city?: unknown;
+    wait_time_disclaimer?: unknown;
   };
 
   try {
@@ -35,10 +40,26 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   const postalCode =
     typeof body.postal_code === "string" ? body.postal_code.trim() : "";
   const city = typeof body.city === "string" ? body.city.trim() : "";
+  const waitTimeDisclaimer =
+    typeof body.wait_time_disclaimer === "string"
+      ? body.wait_time_disclaimer.trim()
+      : DEFAULT_WAIT_TIME_DISCLAIMER;
+  const normalizedWaitTimeDisclaimer =
+    waitTimeDisclaimer || DEFAULT_WAIT_TIME_DISCLAIMER;
 
   if (!password) {
     return NextResponse.json(
       { success: false, error: "Bitte gib das Admin-Passwort ein." },
+      { status: 400 }
+    );
+  }
+
+  if (normalizedWaitTimeDisclaimer.length > MAX_WAIT_TIME_DISCLAIMER_LENGTH) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: `Der Hinweis darf maximal ${MAX_WAIT_TIME_DISCLAIMER_LENGTH} Zeichen lang sein.`,
+      },
       { status: 400 }
     );
   }
@@ -78,9 +99,10 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       address: address || null,
       postal_code: postalCode || null,
       city: city || null,
+      wait_time_disclaimer: normalizedWaitTimeDisclaimer,
     })
     .eq("id", currentCompany.id)
-    .select("id, name, slug, address, postal_code, city")
+    .select("id, name, slug, address, postal_code, city, wait_time_disclaimer")
     .maybeSingle();
 
   if (error) {
@@ -89,6 +111,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       lowerMessage.includes("address") ||
       lowerMessage.includes("postal_code") ||
       lowerMessage.includes("city") ||
+      lowerMessage.includes("wait_time_disclaimer") ||
       lowerMessage.includes("column");
     const blockedByDatabase =
       lowerMessage.includes("permission") ||
@@ -98,7 +121,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       {
         success: false,
         error: missingColumn
-          ? "In Supabase fehlen noch die Spalten address, postal_code oder city."
+          ? "In Supabase fehlt noch eine Settings-Spalte, wahrscheinlich wait_time_disclaimer."
           : blockedByDatabase && !hasSupabaseServerKey
             ? "Supabase blockiert das Speichern. Lege einen Server-Key in der App an oder erlaube Updates fuer companies."
             : error.message,

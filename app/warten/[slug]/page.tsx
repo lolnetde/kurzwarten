@@ -3,11 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { ButtonSpinner, PanelSkeleton } from "@/components/LoadingStates";
+import { DEFAULT_WAIT_TIME_DISCLAIMER } from "@/lib/wait-time-disclaimer";
 
 type Company = {
   id: string;
   name: string;
   slug: string;
+  wait_time_disclaimer: string | null;
 };
 
 type TicketInfo = {
@@ -47,6 +49,8 @@ export default function CompanyWartenPage() {
   const parsedTicketNumber = Number(trimmedTicketNumber);
   const canOpenTicket =
     Number.isInteger(parsedTicketNumber) && parsedTicketNumber > 0 && !isLoadingTicket;
+  const waitTimeDisclaimer =
+    company?.wait_time_disclaimer?.trim() || DEFAULT_WAIT_TIME_DISCLAIMER;
 
   const loadTicketStatus = useCallback(async (ticketId: number) => {
     try {
@@ -305,6 +309,15 @@ export default function CompanyWartenPage() {
                     </p>
                   </div>
                 )}
+
+                <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-4">
+                  <p className="text-sm font-bold text-amber-950">
+                    Hinweis zu Wartezeiten
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-amber-900">
+                    {waitTimeDisclaimer}
+                  </p>
+                </div>
 
                 <button
                   onClick={forgetTicket}

@@ -6,6 +6,10 @@ import {
   saveAdminPassword,
 } from "@/lib/admin-session";
 import { ButtonSpinner, PanelSkeleton } from "@/components/LoadingStates";
+import {
+  DEFAULT_WAIT_TIME_DISCLAIMER,
+  MAX_WAIT_TIME_DISCLAIMER_LENGTH,
+} from "@/lib/wait-time-disclaimer";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 
@@ -16,6 +20,7 @@ type Company = {
   address: string | null;
   postal_code: string | null;
   city: string | null;
+  wait_time_disclaimer: string | null;
 };
 
 type DoctorRow = {
@@ -67,6 +72,9 @@ export default function CompanySettingsPage() {
   const [address, setAddress] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [city, setCity] = useState("");
+  const [waitTimeDisclaimer, setWaitTimeDisclaimer] = useState(
+    DEFAULT_WAIT_TIME_DISCLAIMER
+  );
   const [doctors, setDoctors] = useState<DoctorForm[]>([]);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"error" | "success">("error");
@@ -106,6 +114,9 @@ export default function CompanySettingsPage() {
           setAddress(data.company.address ?? "");
           setPostalCode(data.company.postal_code ?? "");
           setCity(data.company.city ?? "");
+          setWaitTimeDisclaimer(
+            data.company.wait_time_disclaimer ?? DEFAULT_WAIT_TIME_DISCLAIMER
+          );
         } else {
           setMessageType("error");
           setMessage(data.error ?? "Praxis wurde nicht gefunden.");
@@ -130,6 +141,10 @@ export default function CompanySettingsPage() {
             setAddress(loginData.company.address ?? "");
             setPostalCode(loginData.company.postal_code ?? "");
             setCity(loginData.company.city ?? "");
+            setWaitTimeDisclaimer(
+              loginData.company.wait_time_disclaimer ??
+                DEFAULT_WAIT_TIME_DISCLAIMER
+            );
             setPassword(savedPassword);
             setIsUnlocked(true);
             await loadDoctors();
@@ -208,6 +223,9 @@ export default function CompanySettingsPage() {
         setAddress(data.company.address ?? "");
         setPostalCode(data.company.postal_code ?? "");
         setCity(data.company.city ?? "");
+        setWaitTimeDisclaimer(
+          data.company.wait_time_disclaimer ?? DEFAULT_WAIT_TIME_DISCLAIMER
+        );
         saveAdminPassword(slug, password.trim());
         setPassword(password.trim());
         setIsUnlocked(true);
@@ -250,6 +268,19 @@ export default function CompanySettingsPage() {
       return;
     }
 
+    const normalizedWaitTimeDisclaimer =
+      waitTimeDisclaimer.trim() || DEFAULT_WAIT_TIME_DISCLAIMER;
+
+    if (
+      normalizedWaitTimeDisclaimer.length > MAX_WAIT_TIME_DISCLAIMER_LENGTH
+    ) {
+      setMessageType("error");
+      setMessage(
+        `Der Hinweis darf maximal ${MAX_WAIT_TIME_DISCLAIMER_LENGTH} Zeichen lang sein.`
+      );
+      return;
+    }
+
     setIsSaving(true);
 
     try {
@@ -263,6 +294,7 @@ export default function CompanySettingsPage() {
           address,
           postal_code: postalCode,
           city,
+          wait_time_disclaimer: normalizedWaitTimeDisclaimer,
         }),
       });
       const companyData = await companyResponse.json();
@@ -312,6 +344,9 @@ export default function CompanySettingsPage() {
       setAddress(companyData.company.address ?? "");
       setPostalCode(companyData.company.postal_code ?? "");
       setCity(companyData.company.city ?? "");
+      setWaitTimeDisclaimer(
+        companyData.company.wait_time_disclaimer ?? normalizedWaitTimeDisclaimer
+      );
       setDoctors((doctorsData.doctors ?? []).map(mapDoctorRow));
       saveAdminPassword(slug, password.trim());
       setMessageType("success");
@@ -491,6 +526,29 @@ export default function CompanySettingsPage() {
                     placeholder="z. B. Koeln"
                   />
                 </div>
+              </div>
+
+              <div>
+                <div className="flex items-end justify-between gap-3">
+                  <label className="block text-sm font-semibold text-slate-700">
+                    Hinweis zu Wartezeiten
+                  </label>
+                  <span className="text-xs font-semibold text-slate-500">
+                    {waitTimeDisclaimer.trim().length}/
+                    {MAX_WAIT_TIME_DISCLAIMER_LENGTH}
+                  </span>
+                </div>
+                <textarea
+                  value={waitTimeDisclaimer}
+                  onChange={(event) => setWaitTimeDisclaimer(event.target.value)}
+                  className="mt-2 min-h-28 w-full resize-y rounded-lg border border-slate-300 bg-white px-4 py-3 leading-6 text-slate-950"
+                  maxLength={MAX_WAIT_TIME_DISCLAIMER_LENGTH}
+                  placeholder={DEFAULT_WAIT_TIME_DISCLAIMER}
+                />
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Dieser Text wird Kundinnen und Kunden direkt bei ihrem Ticket
+                  angezeigt.
+                </p>
               </div>
             </section>
 

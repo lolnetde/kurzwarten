@@ -1,6 +1,10 @@
 import { supabase } from "@/lib/supabase";
 import { NextResponse } from "next/server";
 
+function isMissingDisclaimerError(error: { message?: string } | null) {
+  return error?.message?.toLowerCase().includes("wait_time_disclaimer") ?? false;
+}
+
 type CompanyRow = {
   id: string;
   name: string;
@@ -8,6 +12,7 @@ type CompanyRow = {
   address: string | null;
   postal_code: string | null;
   city: string | null;
+  wait_time_disclaimer: string | null;
   admin_password: string;
 };
 
@@ -34,12 +39,26 @@ export async function POST(request: Request) {
     );
   }
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("companies")
-    .select("id, name, slug, address, postal_code, city, admin_password")
+    .select("id, name, slug, address, postal_code, city, wait_time_disclaimer, admin_password")
     .eq("slug", slug)
     .limit(1)
     .maybeSingle();
+
+  if (isMissingDisclaimerError(error)) {
+    const fallbackResult = await supabase
+      .from("companies")
+      .select("id, name, slug, address, postal_code, city, admin_password")
+      .eq("slug", slug)
+      .limit(1)
+      .maybeSingle();
+
+    data = fallbackResult.data
+      ? { ...fallbackResult.data, wait_time_disclaimer: null }
+      : null;
+    error = fallbackResult.error;
+  }
 
   const company = data as CompanyRow | null;
 
@@ -66,6 +85,7 @@ export async function POST(request: Request) {
       address: company.address,
       postal_code: company.postal_code,
       city: company.city,
+      wait_time_disclaimer: company.wait_time_disclaimer,
     },
   });
 }
