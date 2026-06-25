@@ -4,12 +4,14 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { ButtonSpinner, PanelSkeleton } from "@/components/LoadingStates";
 import { DEFAULT_WAIT_TIME_DISCLAIMER } from "@/lib/wait-time-disclaimer";
+import { getCompanyEnvironmentCopy } from "@/lib/company-environments";
 
 type Company = {
   id: string;
   name: string;
   slug: string;
   wait_time_disclaimer: string | null;
+  environment_type: string | null;
 };
 
 type TicketInfo = {
@@ -51,6 +53,7 @@ export default function CompanyWartenPage() {
     Number.isInteger(parsedTicketNumber) && parsedTicketNumber > 0 && !isLoadingTicket;
   const waitTimeDisclaimer =
     company?.wait_time_disclaimer?.trim() || DEFAULT_WAIT_TIME_DISCLAIMER;
+  const environmentCopy = getCompanyEnvironmentCopy(company?.environment_type);
 
   const loadTicketStatus = useCallback(async (ticketId: number) => {
     try {
@@ -172,7 +175,7 @@ export default function CompanyWartenPage() {
                   Ticketnummer eingeben
                 </h1>
                 <p className="mt-4 text-lg leading-8 text-slate-600">
-                  Gib die Nummer ein, die du in der Praxis erhalten hast. Danach
+                  Gib die Nummer ein, die du vor Ort erhalten hast. Danach
                   siehst du deine Position und den Live-Status.
                 </p>
 
@@ -257,7 +260,7 @@ export default function CompanyWartenPage() {
                   {ticket.status === "waiting" && (
                     <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                       <p className="text-sm font-semibold text-slate-500">
-                        Vor dir bei diesem Arzt
+                        Vor dir bei diesem {environmentCopy.workerSingular}
                       </p>
                       <p className="mt-1 text-xl font-bold">
                         {ticket.peopleBefore} Personen
@@ -304,7 +307,7 @@ export default function CompanyWartenPage() {
                       Ihr Ticket wurde gelöscht.
                     </p>
                     <p className="mt-2 text-lg leading-8 text-red-800">
-                      Bitte frage in der Praxis nach oder gib eine andere
+                      Bitte frage vor Ort nach oder gib eine andere
                       Ticketnummer ein.
                     </p>
                   </div>

@@ -2,6 +2,10 @@ import { createSlug } from "@/lib/slug";
 import { supabase } from "@/lib/supabase";
 import { NextResponse } from "next/server";
 
+function isMissingEnvironmentError(error: { message?: string } | null) {
+  return error?.message?.toLowerCase().includes("environment_type") ?? false;
+}
+
 type CompanyRow = {
   id: string;
   name: string;
@@ -9,6 +13,7 @@ type CompanyRow = {
   address: string | null;
   postal_code: string | null;
   city: string | null;
+  environment_type: string | null;
 };
 
 export async function POST(request: Request) {
@@ -33,12 +38,26 @@ export async function POST(request: Request) {
     );
   }
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("companies")
-    .select("id, name, slug, address, postal_code, city")
+    .select("id, name, slug, address, postal_code, city, environment_type")
     .eq("slug", slug)
     .limit(1)
     .maybeSingle();
+
+  if (isMissingEnvironmentError(error)) {
+    const fallbackResult = await supabase
+      .from("companies")
+      .select("id, name, slug, address, postal_code, city")
+      .eq("slug", slug)
+      .limit(1)
+      .maybeSingle();
+
+    data = fallbackResult.data
+      ? { ...fallbackResult.data, environment_type: null }
+      : null;
+    error = fallbackResult.error;
+  }
 
   const company = data as CompanyRow | null;
 

@@ -6,8 +6,13 @@ function isMissingQueuePositionError(error: { message?: string } | null) {
   return error?.message?.toLowerCase().includes("queue_position") ?? false;
 }
 
-function isMissingDisclaimerError(error: { message?: string } | null) {
-  return error?.message?.toLowerCase().includes("wait_time_disclaimer") ?? false;
+function isMissingCompanyProfileError(error: { message?: string } | null) {
+  const message = error?.message?.toLowerCase() ?? "";
+
+  return (
+    message.includes("wait_time_disclaimer") ||
+    message.includes("environment_type")
+  );
 }
 
 type CompanyRow = {
@@ -18,6 +23,7 @@ type CompanyRow = {
   postal_code: string | null;
   city: string | null;
   wait_time_disclaimer: string | null;
+  environment_type: string | null;
 };
 
 type TicketRow = {
@@ -64,12 +70,14 @@ export async function GET(_request: Request, { params }: RouteParams) {
 
   let { data: companyData, error: companyError } = await supabaseServer
     .from("companies")
-    .select("id, name, slug, address, postal_code, city, wait_time_disclaimer")
+    .select(
+      "id, name, slug, address, postal_code, city, wait_time_disclaimer, environment_type"
+    )
     .eq("slug", slug)
     .limit(1)
     .maybeSingle();
 
-  if (isMissingDisclaimerError(companyError)) {
+  if (isMissingCompanyProfileError(companyError)) {
     const fallbackResult = await supabaseServer
       .from("companies")
       .select("id, name, slug, address, postal_code, city")
@@ -78,7 +86,11 @@ export async function GET(_request: Request, { params }: RouteParams) {
       .maybeSingle();
 
     companyData = fallbackResult.data
-      ? { ...fallbackResult.data, wait_time_disclaimer: null }
+      ? {
+          ...fallbackResult.data,
+          wait_time_disclaimer: null,
+          environment_type: null,
+        }
       : null;
     companyError = fallbackResult.error;
   }

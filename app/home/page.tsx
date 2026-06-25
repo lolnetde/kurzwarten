@@ -4,11 +4,19 @@ import Link from "next/link";
 import { useCallback, useState } from "react";
 import QrScanner from "@/components/QrScanner";
 import { ButtonSpinner } from "@/components/LoadingStates";
+import {
+  COMPANY_ENVIRONMENTS,
+  DEFAULT_COMPANY_ENVIRONMENT,
+  normalizeCompanyEnvironment,
+  getCompanyEnvironmentCopy,
+  type CompanyEnvironment,
+} from "@/lib/company-environments";
 
 type Company = {
   id: string;
   name: string;
   slug: string;
+  environment_type: string | null;
 };
 
 const MAX_COMPANY_NAME_LENGTH = 80;
@@ -17,6 +25,9 @@ const MIN_PASSWORD_LENGTH = 4;
 export default function HomePage() {
   const [companyName, setCompanyName] = useState("");
   const [companyPassword, setCompanyPassword] = useState("");
+  const [environmentType, setEnvironmentType] = useState<CompanyEnvironment>(
+    DEFAULT_COMPANY_ENVIRONMENT
+  );
   const [loginName, setLoginName] = useState("");
   const [company, setCompany] = useState<Company | null>(null);
   const [message, setMessage] = useState("");
@@ -28,6 +39,7 @@ export default function HomePage() {
   const trimmedCompanyName = companyName.trim();
   const trimmedCompanyPassword = companyPassword.trim();
   const trimmedLoginName = loginName.trim();
+  const environmentCopy = getCompanyEnvironmentCopy(environmentType);
   const isNameTooLong = trimmedCompanyName.length > MAX_COMPANY_NAME_LENGTH;
   const isPasswordTooShort =
     trimmedCompanyPassword.length > 0 &&
@@ -64,7 +76,9 @@ export default function HomePage() {
     setCompany(null);
 
     if (!trimmedCompanyName) {
-      setMessage("Bitte gib einen Namen der Praxis oder des Unternehmens ein.");
+      setMessage(
+        `Bitte gib den Namen ${environmentCopy.organizationLabelWithArticle} ein.`
+      );
       return;
     }
 
@@ -93,6 +107,7 @@ export default function HomePage() {
         body: JSON.stringify({
           name: trimmedCompanyName,
           password: trimmedCompanyPassword,
+          environment_type: environmentType,
         }),
       });
 
@@ -116,7 +131,9 @@ export default function HomePage() {
     setLoginMessage("");
 
     if (!trimmedLoginName) {
-      setLoginMessage("Bitte gib den Namen der Praxis oder des Unternehmens ein.");
+      setLoginMessage(
+        "Bitte gib den Namen der Einrichtung oder des Unternehmens ein."
+      );
       return;
     }
 
@@ -137,7 +154,7 @@ export default function HomePage() {
         window.location.href = `/admin/${data.company.slug}`;
       } else {
         setLoginMessage(
-          data.error ?? "Praxis oder Unternehmen wurde nicht gefunden."
+          data.error ?? "Einrichtung oder Unternehmen wurde nicht gefunden."
         );
       }
     } catch {
@@ -156,7 +173,7 @@ export default function HomePage() {
       <section className="mx-auto grid min-h-[calc(100vh-73px)] max-w-6xl gap-10 px-5 py-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
         <div>
           <p className="inline-flex rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-800">
-            Digitale Warteschlangen für Praxen und Service-Teams
+            Digitale Warteschlangen für Praxen, Salons, Ämter und Service-Teams
           </p>
 
           <h1 className="mt-6 max-w-3xl text-4xl font-bold leading-tight tracking-normal text-slate-950 md:text-6xl">
@@ -164,7 +181,7 @@ export default function HomePage() {
           </h1>
 
           <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-            KurzWarten gibt Patienten und Kunden eine klare Ticketnummer, eine
+            KurzWarten gibt Besuchern eine klare Ticketnummer, eine
             verständliche Wartezeit und einen Live-Status. Teams behalten im
             Adminbereich den Überblick und rufen Personen ohne Chaos auf.
           </p>
@@ -208,15 +225,15 @@ export default function HomePage() {
 
         <div className="grid gap-5">
           <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-sm font-semibold text-blue-700">Für Praxen</p>
+            <p className="text-sm font-semibold text-blue-700">Für Teams</p>
             <h2 className="mt-1 text-2xl font-bold">Adminbereich öffnen</h2>
             <p className="mt-2 leading-7 text-slate-600">
-              Gib den Namen deiner Praxis oder deines Unternehmens ein. Das
+              Gib den Namen deiner Einrichtung oder deines Unternehmens ein. Das
               Passwort wird erst auf der Adminseite abgefragt.
             </p>
 
             <label className="mt-5 block text-sm font-semibold text-slate-700">
-              Praxis oder Unternehmen
+              Einrichtung oder Unternehmen
             </label>
             <input
               value={loginName}
@@ -231,7 +248,7 @@ export default function HomePage() {
                 }
               }}
               className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-slate-950"
-              placeholder="z. B. Hausarzt Müller"
+              placeholder="z. B. Hausarzt Müller, Salon Schnittpunkt"
             />
 
             <button
@@ -260,14 +277,34 @@ export default function HomePage() {
             <p className="text-sm font-semibold text-emerald-700">
               Neues Konto
             </p>
-            <h2 className="mt-1 text-2xl font-bold">Praxis einrichten</h2>
+            <h2 className="mt-1 text-2xl font-bold">
+              {environmentCopy.accountTitle}
+            </h2>
             <p className="mt-2 leading-7 text-slate-600">
               Der Name kann nur einmal vergeben werden und wird zur Adresse der
               Warteschlange.
             </p>
 
             <label className="mt-5 block text-sm font-semibold text-slate-700">
-              Name
+              Bereich
+            </label>
+            <select
+              value={environmentType}
+              onChange={(event) => {
+                setEnvironmentType(normalizeCompanyEnvironment(event.target.value));
+                setMessage("");
+              }}
+              className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-slate-950"
+            >
+              {COMPANY_ENVIRONMENTS.map((environment) => (
+                <option key={environment.id} value={environment.id}>
+                  {environment.label}
+                </option>
+              ))}
+            </select>
+
+            <label className="mt-5 block text-sm font-semibold text-slate-700">
+              {environmentCopy.accountNameLabel}
             </label>
             <input
               value={companyName}
@@ -283,7 +320,7 @@ export default function HomePage() {
               }}
               className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-slate-950"
               maxLength={MAX_COMPANY_NAME_LENGTH}
-              placeholder="Name der Praxis"
+              placeholder={environmentCopy.accountNamePlaceholder}
             />
 
             <label className="mt-4 block text-sm font-semibold text-slate-700">

@@ -19,7 +19,7 @@ export default function NutzungsbedingungenPage() {
               </h2>
               <p className="mt-3">
                 KurzWarten dient der einfachen Verwaltung digitaler
-                Warteschlangen für Praxen, Dienstleister und andere
+                Warteschlangen für Dienstleister, Einrichtungen und andere
                 Organisationen.
               </p>
             </section>
@@ -48,12 +48,12 @@ export default function NutzungsbedingungenPage() {
 
             <section>
               <h2 className="text-xl font-bold text-slate-950">
-                Kein medizinischer Dienst
+                Kein Fach- oder Notfalldienst
               </h2>
               <p className="mt-3">
-                KurzWarten ersetzt keine medizinische Beratung, keine
-                Notfallversorgung und keine Entscheidung einer Praxis über
-                Behandlungsreihenfolgen.
+                KurzWarten ersetzt keine fachliche Beratung, keine
+                Notfallversorgung und keine Entscheidung einer Einrichtung über
+                Reihenfolgen vor Ort.
               </p>
             </section>
           </div>

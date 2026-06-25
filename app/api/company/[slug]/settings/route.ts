@@ -1,4 +1,5 @@
 import { hasSupabaseServerKey, supabaseServer } from "@/lib/supabase-server";
+import { normalizeCompanyEnvironment } from "@/lib/company-environments";
 import {
   DEFAULT_WAIT_TIME_DISCLAIMER,
   MAX_WAIT_TIME_DISCLAIMER_LENGTH,
@@ -24,6 +25,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     postal_code?: unknown;
     city?: unknown;
     wait_time_disclaimer?: unknown;
+    environment_type?: unknown;
   };
 
   try {
@@ -46,6 +48,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       : DEFAULT_WAIT_TIME_DISCLAIMER;
   const normalizedWaitTimeDisclaimer =
     waitTimeDisclaimer || DEFAULT_WAIT_TIME_DISCLAIMER;
+  const environmentType = normalizeCompanyEnvironment(body.environment_type);
 
   if (!password) {
     return NextResponse.json(
@@ -100,9 +103,12 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       postal_code: postalCode || null,
       city: city || null,
       wait_time_disclaimer: normalizedWaitTimeDisclaimer,
+      environment_type: environmentType,
     })
     .eq("id", currentCompany.id)
-    .select("id, name, slug, address, postal_code, city, wait_time_disclaimer")
+    .select(
+      "id, name, slug, address, postal_code, city, wait_time_disclaimer, environment_type"
+    )
     .maybeSingle();
 
   if (error) {
@@ -112,6 +118,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       lowerMessage.includes("postal_code") ||
       lowerMessage.includes("city") ||
       lowerMessage.includes("wait_time_disclaimer") ||
+      lowerMessage.includes("environment_type") ||
       lowerMessage.includes("column");
     const blockedByDatabase =
       lowerMessage.includes("permission") ||
@@ -121,7 +128,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       {
         success: false,
         error: missingColumn
-          ? "In Supabase fehlt noch eine Settings-Spalte, wahrscheinlich wait_time_disclaimer."
+          ? "In Supabase fehlt noch eine Settings-Spalte, wahrscheinlich wait_time_disclaimer oder environment_type."
           : blockedByDatabase && !hasSupabaseServerKey
             ? "Supabase blockiert das Speichern. Lege einen Server-Key in der App an oder erlaube Updates fuer companies."
             : error.message,

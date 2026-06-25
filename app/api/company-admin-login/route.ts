@@ -1,8 +1,13 @@
 import { supabase } from "@/lib/supabase";
 import { NextResponse } from "next/server";
 
-function isMissingDisclaimerError(error: { message?: string } | null) {
-  return error?.message?.toLowerCase().includes("wait_time_disclaimer") ?? false;
+function isMissingCompanyProfileError(error: { message?: string } | null) {
+  const message = error?.message?.toLowerCase() ?? "";
+
+  return (
+    message.includes("wait_time_disclaimer") ||
+    message.includes("environment_type")
+  );
 }
 
 type CompanyRow = {
@@ -13,6 +18,7 @@ type CompanyRow = {
   postal_code: string | null;
   city: string | null;
   wait_time_disclaimer: string | null;
+  environment_type: string | null;
   admin_password: string;
 };
 
@@ -41,12 +47,14 @@ export async function POST(request: Request) {
 
   let { data, error } = await supabase
     .from("companies")
-    .select("id, name, slug, address, postal_code, city, wait_time_disclaimer, admin_password")
+    .select(
+      "id, name, slug, address, postal_code, city, wait_time_disclaimer, environment_type, admin_password"
+    )
     .eq("slug", slug)
     .limit(1)
     .maybeSingle();
 
-  if (isMissingDisclaimerError(error)) {
+  if (isMissingCompanyProfileError(error)) {
     const fallbackResult = await supabase
       .from("companies")
       .select("id, name, slug, address, postal_code, city, admin_password")
@@ -55,7 +63,11 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     data = fallbackResult.data
-      ? { ...fallbackResult.data, wait_time_disclaimer: null }
+      ? {
+          ...fallbackResult.data,
+          wait_time_disclaimer: null,
+          environment_type: null,
+        }
       : null;
     error = fallbackResult.error;
   }
@@ -86,6 +98,7 @@ export async function POST(request: Request) {
       postal_code: company.postal_code,
       city: company.city,
       wait_time_disclaimer: company.wait_time_disclaimer,
+      environment_type: company.environment_type,
     },
   });
 }

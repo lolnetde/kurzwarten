@@ -92,14 +92,17 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
   if (!Array.isArray(body.doctors)) {
     return NextResponse.json(
-      { success: false, error: "Aerzte konnten nicht gelesen werden." },
+      { success: false, error: "Team-Eintraege konnten nicht gelesen werden." },
       { status: 400 }
     );
   }
 
   if (body.doctors.length > MAX_DOCTORS) {
     return NextResponse.json(
-      { success: false, error: `Maximal ${MAX_DOCTORS} Aerzte sind erlaubt.` },
+      {
+        success: false,
+        error: `Maximal ${MAX_DOCTORS} Team-Eintraege sind erlaubt.`,
+      },
       { status: 400 }
     );
   }
@@ -152,7 +155,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
       return NextResponse.json(
         {
           success: false,
-          error: `Arztnamen duerfen maximal ${MAX_DOCTOR_NAME_LENGTH} Zeichen lang sein.`,
+          error: `Namen duerfen maximal ${MAX_DOCTOR_NAME_LENGTH} Zeichen lang sein.`,
         },
         { status: 400 }
       );

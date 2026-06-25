@@ -10,6 +10,13 @@ import {
   DEFAULT_WAIT_TIME_DISCLAIMER,
   MAX_WAIT_TIME_DISCLAIMER_LENGTH,
 } from "@/lib/wait-time-disclaimer";
+import {
+  COMPANY_ENVIRONMENTS,
+  DEFAULT_COMPANY_ENVIRONMENT,
+  getCompanyEnvironmentCopy,
+  normalizeCompanyEnvironment,
+  type CompanyEnvironment,
+} from "@/lib/company-environments";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 
@@ -21,6 +28,7 @@ type Company = {
   postal_code: string | null;
   city: string | null;
   wait_time_disclaimer: string | null;
+  environment_type: string | null;
 };
 
 type DoctorRow = {
@@ -39,11 +47,11 @@ type DoctorForm = {
   treatmentTimeMax: string;
 };
 
-function createDoctorForm(index: number): DoctorForm {
+function createDoctorForm(index: number, workerSingular = "Mitarbeiter"): DoctorForm {
   return {
     clientId: crypto.randomUUID(),
     id: "",
-    name: `Arzt ${index + 1}`,
+    name: `${workerSingular} ${index + 1}`,
     mode: "fixed",
     treatmentTimeMin: "10",
     treatmentTimeMax: "10",
@@ -75,6 +83,9 @@ export default function CompanySettingsPage() {
   const [waitTimeDisclaimer, setWaitTimeDisclaimer] = useState(
     DEFAULT_WAIT_TIME_DISCLAIMER
   );
+  const [environmentType, setEnvironmentType] = useState<CompanyEnvironment>(
+    DEFAULT_COMPANY_ENVIRONMENT
+  );
   const [doctors, setDoctors] = useState<DoctorForm[]>([]);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"error" | "success">("error");
@@ -85,6 +96,7 @@ export default function CompanySettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
 
   const doctorCount = doctors.length;
+  const environmentCopy = getCompanyEnvironmentCopy(environmentType);
   const hasEmptyDoctorName = useMemo(
     () => doctors.some((doctor) => !doctor.name.trim()),
     [doctors]
@@ -100,7 +112,7 @@ export default function CompanySettingsPage() {
     }
 
     setMessageType("error");
-    setMessage(data.error ?? "Aerzte konnten nicht geladen werden.");
+    setMessage(data.error ?? "Team konnte nicht geladen werden.");
   }, [slug]);
 
   useEffect(() => {
@@ -117,9 +129,12 @@ export default function CompanySettingsPage() {
           setWaitTimeDisclaimer(
             data.company.wait_time_disclaimer ?? DEFAULT_WAIT_TIME_DISCLAIMER
           );
+          setEnvironmentType(
+            normalizeCompanyEnvironment(data.company.environment_type)
+          );
         } else {
           setMessageType("error");
-          setMessage(data.error ?? "Praxis wurde nicht gefunden.");
+          setMessage(data.error ?? "Einrichtung wurde nicht gefunden.");
         }
 
         const savedPassword = getSavedAdminPassword(slug);
@@ -145,6 +160,9 @@ export default function CompanySettingsPage() {
               loginData.company.wait_time_disclaimer ??
                 DEFAULT_WAIT_TIME_DISCLAIMER
             );
+            setEnvironmentType(
+              normalizeCompanyEnvironment(loginData.company.environment_type)
+            );
             setPassword(savedPassword);
             setIsUnlocked(true);
             await loadDoctors();
@@ -154,7 +172,7 @@ export default function CompanySettingsPage() {
         }
       } catch {
         setMessageType("error");
-        setMessage("Praxisdaten konnten nicht geladen werden.");
+        setMessage("Einstellungen konnten nicht geladen werden.");
       } finally {
         setIsUnlocking(false);
         setIsCheckingSavedLogin(false);
@@ -176,7 +194,9 @@ export default function CompanySettingsPage() {
       const nextDoctors = [...currentDoctors];
 
       while (nextDoctors.length < cleanCount) {
-        nextDoctors.push(createDoctorForm(nextDoctors.length));
+        nextDoctors.push(
+          createDoctorForm(nextDoctors.length, environmentCopy.workerSingular)
+        );
       }
 
       return nextDoctors;
@@ -226,6 +246,9 @@ export default function CompanySettingsPage() {
         setWaitTimeDisclaimer(
           data.company.wait_time_disclaimer ?? DEFAULT_WAIT_TIME_DISCLAIMER
         );
+        setEnvironmentType(
+          normalizeCompanyEnvironment(data.company.environment_type)
+        );
         saveAdminPassword(slug, password.trim());
         setPassword(password.trim());
         setIsUnlocked(true);
@@ -264,7 +287,7 @@ export default function CompanySettingsPage() {
 
     if (hasEmptyDoctorName) {
       setMessageType("error");
-      setMessage("Bitte gib jedem Arzt einen Namen.");
+      setMessage(`Bitte gib jedem ${environmentCopy.workerSingular} einen Namen.`);
       return;
     }
 
@@ -295,6 +318,7 @@ export default function CompanySettingsPage() {
           postal_code: postalCode,
           city,
           wait_time_disclaimer: normalizedWaitTimeDisclaimer,
+          environment_type: environmentType,
         }),
       });
       const companyData = await companyResponse.json();
@@ -302,7 +326,7 @@ export default function CompanySettingsPage() {
       if (!companyData.success) {
         setMessageType("error");
         setMessage(
-          companyData.error ?? "Praxisdaten konnten nicht gespeichert werden."
+          companyData.error ?? "Daten konnten nicht gespeichert werden."
         );
         return;
       }
@@ -335,7 +359,7 @@ export default function CompanySettingsPage() {
       if (!doctorsData.success) {
         setMessageType("error");
         setMessage(
-          doctorsData.error ?? "Aerzte konnten nicht gespeichert werden."
+          doctorsData.error ?? "Team konnte nicht gespeichert werden."
         );
         return;
       }
@@ -346,6 +370,9 @@ export default function CompanySettingsPage() {
       setCity(companyData.company.city ?? "");
       setWaitTimeDisclaimer(
         companyData.company.wait_time_disclaimer ?? normalizedWaitTimeDisclaimer
+      );
+      setEnvironmentType(
+        normalizeCompanyEnvironment(companyData.company.environment_type)
       );
       setDoctors((doctorsData.doctors ?? []).map(mapDoctorRow));
       saveAdminPassword(slug, password.trim());
@@ -474,19 +501,21 @@ export default function CompanySettingsPage() {
             {company?.name ?? "KurzWarten"}
           </p>
           <h1 className="mt-1 text-3xl font-bold leading-tight">
-            Praxis-Einstellungen
+            {environmentCopy.settingsTitle}
           </h1>
           <p className="mt-3 leading-7 text-slate-600">
-            Hier pflegst du Adresse, Anzahl der Aerzte und die Behandlungszeit
-            pro Arzt. Neue Tickets werden danach einem Arzt zugeordnet.
+            Hier pflegst du Adresse, Teamgröße und die durchschnittliche
+            Bearbeitungszeit. Neue Tickets werden danach passend zugeordnet.
           </p>
 
           <div className="mt-6 grid gap-7">
             <section className="grid gap-5">
               <div>
-                <h2 className="text-xl font-bold">Praxisdaten</h2>
+                <h2 className="text-xl font-bold">
+                  {environmentCopy.dataTitle}
+                </h2>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
-                  Diese Angaben erscheinen in der Praxissuche.
+                  Diese Angaben erscheinen in der Suche.
                 </p>
               </div>
 
@@ -555,16 +584,18 @@ export default function CompanySettingsPage() {
             <section className="grid gap-5 border-t border-slate-200 pt-6">
               <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                 <div>
-                  <h2 className="text-xl font-bold">Aerzte und Zeiten</h2>
+                  <h2 className="text-xl font-bold">
+                    {environmentCopy.workerSectionTitle}
+                  </h2>
                   <p className="mt-1 text-sm leading-6 text-slate-600">
-                    Jedes Ticket wird einem Arzt zugeordnet. Die Wartezeit wird
-                    dann nur fuer diese Warteschlange berechnet.
+                    Jedes Ticket wird einem Eintrag zugeordnet. Die Wartezeit
+                    wird dann nur für diese Warteschlange berechnet.
                   </p>
                 </div>
 
                 <div className="w-full md:w-48">
                   <label className="block text-sm font-semibold text-slate-700">
-                    Anzahl von Aerzten
+                    {environmentCopy.workerCountLabel}
                   </label>
                   <input
                     value={doctorCount}
@@ -579,8 +610,8 @@ export default function CompanySettingsPage() {
 
               {doctors.length === 0 && (
                 <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-900">
-                  Lege mindestens einen Arzt an, damit der Empfang Tickets
-                  erstellen kann.
+                  Lege mindestens einen Eintrag an, damit Tickets erstellt
+                  werden können.
                 </div>
               )}
 
@@ -591,7 +622,9 @@ export default function CompanySettingsPage() {
                     className="rounded-lg border border-slate-200 bg-slate-50 p-4"
                   >
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                      <p className="font-bold">Arzt {index + 1}</p>
+                      <p className="font-bold">
+                        {environmentCopy.workerSingular} {index + 1}
+                      </p>
                       <button
                         onClick={() => removeDoctor(doctor.clientId)}
                         className="rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"
@@ -613,7 +646,7 @@ export default function CompanySettingsPage() {
                             })
                           }
                           className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-slate-950"
-                          placeholder="z. B. Dr. Meyer"
+                          placeholder={environmentCopy.workerNamePlaceholder}
                         />
                       </div>
 
@@ -686,6 +719,33 @@ export default function CompanySettingsPage() {
                   </div>
                 ))}
               </div>
+            </section>
+
+            <section className="grid gap-4 border-t border-slate-200 pt-6">
+              <div>
+                <h2 className="text-xl font-bold">Bereich</h2>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  Diese Auswahl passt die Begriffe in Adminbereich,
+                  Kundenseite und Einstellungen an.
+                </p>
+              </div>
+
+              <select
+                value={environmentType}
+                onChange={(event) => {
+                  setEnvironmentType(
+                    normalizeCompanyEnvironment(event.target.value)
+                  );
+                  setMessage("");
+                }}
+                className="h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-slate-950"
+              >
+                {COMPANY_ENVIRONMENTS.map((environment) => (
+                  <option key={environment.id} value={environment.id}>
+                    {environment.label}
+                  </option>
+                ))}
+              </select>
             </section>
 
             <button

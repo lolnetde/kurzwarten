@@ -77,7 +77,7 @@ export default function WartenOverviewPage() {
     setMessage("");
 
     if (!trimmedCompanyName) {
-      setMessage("Bitte gib den Namen der Praxis oder des Unternehmens ein.");
+      setMessage("Bitte gib den Namen der Einrichtung oder des Unternehmens ein.");
       return;
     }
 
@@ -115,13 +115,13 @@ export default function WartenOverviewPage() {
       <section className="mx-auto flex min-h-[calc(100vh-73px)] max-w-xl flex-col justify-center px-5 py-10">
         <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <p className="text-sm font-semibold text-blue-700">
-            KurzWarten für Patienten und Kunden
+            KurzWarten für Besucher und Kunden
           </p>
           <h1 className="mt-2 text-4xl font-bold leading-tight">
             Warteschlange finden
           </h1>
           <p className="mt-4 text-lg leading-8 text-slate-600">
-            Scanne den QR-Code am Empfang oder suche nach Praxisname, Adresse,
+            Scanne den QR-Code vor Ort oder suche nach Name, Adresse,
             Postleitzahl oder Stadt.
           </p>
 
@@ -154,7 +154,7 @@ export default function WartenOverviewPage() {
               }
             }}
             className="mt-2 h-14 w-full rounded-lg border border-slate-300 bg-white px-4 text-lg text-slate-950"
-            placeholder="z. B. Köln Hausarzt Jo oder 50667"
+            placeholder="z. B. Köln, Müller oder 50667"
           />
 
           {suggestions.length > 0 && (

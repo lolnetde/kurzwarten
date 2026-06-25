@@ -41,7 +41,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
   if (!doctorId) {
     return NextResponse.json(
-      { success: false, error: "Bitte waehle einen Arzt aus." },
+      { success: false, error: "Bitte waehle eine Zuordnung aus." },
       { status: 400 }
     );
   }
@@ -89,7 +89,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
   if (!doctorData) {
     return NextResponse.json(
-      { success: false, error: "Dieser Arzt wurde nicht gefunden." },
+      { success: false, error: "Diese Zuordnung wurde nicht gefunden." },
       { status: 404 }
     );
   }
@@ -117,7 +117,10 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
   if (existingTicketIds.size !== ticketIds.length) {
     return NextResponse.json(
-      { success: false, error: "Mindestens ein Ticket gehoert nicht zu diesem Arzt." },
+      {
+        success: false,
+        error: "Mindestens ein Ticket gehoert nicht zu dieser Zuordnung.",
+      },
       { status: 400 }
     );
   }

@@ -58,7 +58,7 @@ export async function POST(request: Request, { params }: RouteParams) {
 
   if (!doctorId) {
     return NextResponse.json(
-      { success: false, error: "Bitte waehle einen Arzt aus." },
+      { success: false, error: "Bitte waehle eine Zuordnung aus." },
       { status: 400 }
     );
   }
@@ -80,7 +80,7 @@ export async function POST(request: Request, { params }: RouteParams) {
 
   if (!doctorData) {
     return NextResponse.json(
-      { success: false, error: "Dieser Arzt wurde nicht gefunden." },
+      { success: false, error: "Diese Zuordnung wurde nicht gefunden." },
       { status: 404 }
     );
   }

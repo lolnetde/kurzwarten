@@ -25,14 +25,14 @@ export default function Navbar() {
             href="/warten"
             className="rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-100"
           >
-            Für Patienten
+            Für Besucher
           </Link>
 
           <Link
             href="/admin"
             className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
           >
-            Für Praxen
+            Für Teams
           </Link>
         </div>
       </div>

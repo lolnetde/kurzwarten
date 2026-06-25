@@ -6,6 +6,10 @@ function isMissingQueuePositionError(error: { message?: string } | null) {
   return error?.message?.toLowerCase().includes("queue_position") ?? false;
 }
 
+function isMissingEnvironmentError(error: { message?: string } | null) {
+  return error?.message?.toLowerCase().includes("environment_type") ?? false;
+}
+
 type CompanyRow = {
   id: string;
   name: string;
@@ -13,6 +17,7 @@ type CompanyRow = {
   address: string | null;
   postal_code: string | null;
   city: string | null;
+  environment_type: string | null;
 };
 
 type RouteParams = {
@@ -24,12 +29,26 @@ type RouteParams = {
 export async function GET(_request: Request, { params }: RouteParams) {
   const { slug } = await params;
 
-  const { data: companyData, error: companyError } = await supabaseServer
+  let { data: companyData, error: companyError } = await supabaseServer
     .from("companies")
-    .select("id, name, slug, address, postal_code, city")
+    .select("id, name, slug, address, postal_code, city, environment_type")
     .eq("slug", slug)
     .limit(1)
     .maybeSingle();
+
+  if (isMissingEnvironmentError(companyError)) {
+    const fallbackResult = await supabaseServer
+      .from("companies")
+      .select("id, name, slug, address, postal_code, city")
+      .eq("slug", slug)
+      .limit(1)
+      .maybeSingle();
+
+    companyData = fallbackResult.data
+      ? { ...fallbackResult.data, environment_type: null }
+      : null;
+    companyError = fallbackResult.error;
+  }
 
   const company = companyData as CompanyRow | null;
 

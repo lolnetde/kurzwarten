@@ -7,6 +7,7 @@ import {
   saveAdminPassword,
 } from "@/lib/admin-session";
 import { ButtonSpinner, PanelSkeleton, TicketListSkeleton } from "@/components/LoadingStates";
+import { getCompanyEnvironmentCopy } from "@/lib/company-environments";
 import {
   useCallback,
   useEffect,
@@ -24,6 +25,7 @@ type Company = {
   address: string | null;
   postal_code: string | null;
   city: string | null;
+  environment_type: string | null;
 };
 
 type Ticket = {
@@ -222,6 +224,7 @@ export default function CompanyAdminPage() {
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const ticketRowRefs = useRef(new Map<number, HTMLDivElement>());
   const previousTicketRects = useRef(new Map<number, DOMRect>());
+  const environmentCopy = getCompanyEnvironmentCopy(company?.environment_type);
 
   const waitingCount = tickets.filter((ticket) => ticket.status === "waiting").length;
   const calledCount = tickets.filter((ticket) => ticket.status === "called").length;
@@ -323,10 +326,10 @@ export default function CompanyAdminPage() {
           return loadedDoctors[0]?.id ?? "";
         });
       } else {
-        setMessage(data.error ?? "Aerzte konnten nicht geladen werden.");
+        setMessage(data.error ?? "Team konnte nicht geladen werden.");
       }
     } catch {
-      setMessage("Aerzte konnten nicht geladen werden.");
+      setMessage("Team konnte nicht geladen werden.");
     }
   }, [slug]);
 
@@ -457,7 +460,9 @@ export default function CompanyAdminPage() {
     setNewTicketDoctorName("");
 
     if (!selectedDoctorId) {
-      setMessage("Bitte lege in den Einstellungen mindestens einen Arzt an.");
+      setMessage(
+        `Bitte lege in den Einstellungen mindestens einen ${environmentCopy.workerSingular} an.`
+      );
       return;
     }
 
@@ -877,7 +882,7 @@ export default function CompanyAdminPage() {
             </p>
 
             <label className="mt-4 block text-sm font-semibold text-slate-700">
-              Arzt
+              {environmentCopy.ticketAssignmentLabel}
             </label>
             <select
               value={selectedDoctorId}
@@ -885,7 +890,9 @@ export default function CompanyAdminPage() {
               className="mt-2 h-12 w-full rounded-lg border border-blue-200 bg-white px-4 font-semibold text-slate-950"
             >
               {doctors.length === 0 && (
-                <option value="">Kein Arzt angelegt</option>
+                <option value="">
+                  Kein {environmentCopy.workerSingular} angelegt
+                </option>
               )}
               {doctors.map((doctor) => (
                 <option key={doctor.id} value={doctor.id}>
@@ -899,7 +906,7 @@ export default function CompanyAdminPage() {
                 href={`/admin/${slug}/settings`}
                 className="mt-3 block rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900"
               >
-                Erst in den Einstellungen Aerzte anlegen
+                Erst in den Einstellungen {environmentCopy.workerPlural} anlegen
               </a>
             )}
 
@@ -940,11 +947,11 @@ export default function CompanyAdminPage() {
 
           <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <p className="text-sm font-semibold text-blue-700">
-              QR-Code für die Praxis
+              QR-Code für {environmentCopy.organizationLabelWithArticle}
             </p>
             <h2 className="mt-1 text-xl font-bold">Kundenseite scannen</h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              Patienten scannen den QR-Code und geben dort ihre Ticketnummer
+              {environmentCopy.customerGroup} scannen den QR-Code und geben dort ihre Ticketnummer
               ein. Der QR-Code führt direkt zur Warteschlange.
             </p>
 
@@ -1004,7 +1011,7 @@ export default function CompanyAdminPage() {
                 value={ticketDoctorFilter}
                 onChange={(event) => setTicketDoctorFilter(event.target.value)}
                 className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800"
-                aria-label="Ticketliste nach Arzt filtern"
+                aria-label={`Ticketliste nach ${environmentCopy.ticketAssignmentLabel} filtern`}
               >
                 <option value="all">Alle Tickets</option>
                 {doctors.map((doctor) => (
@@ -1112,7 +1119,7 @@ export default function CompanyAdminPage() {
                     </span>
                     </p>
                     <p className="text-base text-slate-600">
-                    Arzt:{" "}
+                    {environmentCopy.ticketAssignmentLabel}:{" "}
                     <span className="font-bold text-slate-950">
                       {ticket.doctors ? ticket.doctors.name : "-"}
                     </span>
