@@ -97,6 +97,11 @@ export default function DatenschutzPage() {
                 erneuten Öffnen nicht sofort erneut eingegeben werden muss. Diese
                 lokale Speicherung wird beim Abmelden entfernt.
               </p>
+              <p className="mt-3">
+                Zusätzlich kann die gewählte Darstellung, also heller oder
+                dunkler Modus, lokal im Browser gespeichert werden. Diese
+                Speicherung dient nur der Darstellung der App.
+              </p>
             </section>
 
             <section>
