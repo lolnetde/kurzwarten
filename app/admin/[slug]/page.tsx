@@ -835,6 +835,12 @@ export default function CompanyAdminPage() {
               Kundenseite öffnen
             </a>
             <a
+              href={`/display/${slug}`}
+              className="rounded-lg border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-sm"
+            >
+              Display öffnen
+            </a>
+            <a
               href={`/admin/${slug}/settings`}
               className="rounded-lg border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-sm"
             >
