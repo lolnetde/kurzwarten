@@ -12,7 +12,8 @@ const sections = [
     ],
   },
   {
-    title: "Abgrenzung der datenschutzrechtlichen Verantwortlichkeiten und Auftragsverarbeitung",
+    title:
+      "Abgrenzung der datenschutzrechtlichen Verantwortlichkeiten und Auftragsverarbeitung",
     content: [
       "Es wird ausdrücklich darauf hingewiesen, dass die Anwendung KurzWarten primär durch selbstständige Dritte wie Unternehmen, Arztpraxen, Behörden oder sonstige Dienstleistungsbetriebe implementiert und operativ eingesetzt wird, um logistische Abläufe im Rahmen des Warteraummanagements vor Ort zu koordinieren. Sofern ein solcher Geschäftskunde die Anwendung KurzWarten für seine individuellen organisatorischen Zwecke nutzt und eigenständig darüber entscheidet, ob, in welchem Umfang und unter welchen Bedingungen personenbezogene Merkmale von wartenden Personen erfasst werden, agiert das jeweilige nutzende Unternehmen als alleiniger Verantwortlicher im Sinne des Art. 4 Nr. 7 DSGVO. In diesem spezifischen Kontext wird der Betreiber von KurzWarten ausschließlich als technischer Dienstleister im Wege einer weisungsgebundenen Auftragsverarbeitung gemäß Art. 28 DSGVO für den Kunden tätig, wofür vor der produktiven Inbetriebnahme ein entsprechender Vertrag zur Auftragsverarbeitung (AVV) verbindlich geschlossen wird. Die Eigenverantwortung des Betreibers von KurzWarten beschränkt sich demnach strikt auf diejenigen Verarbeitungsprozesse, welche für die Bereitstellung der Netzinfrastruktur, die Plattformadministration, die Gewährleistung der IT-Sicherheit, die Systemfehleranalyse, die Abrechnungsmodalitäten sowie die allgemeine Vertragskommunikation mit den B2B-Kunden zwingend erforderlich sind.",
     ],
@@ -50,7 +51,7 @@ const sections = [
   {
     title: "Einbindung externer Dienstleister, Hosting und Backend-Strukturen",
     content: [
-      "Für den technischen Betrieb der Plattform bedient sich der Verantwortliche spezialisierter Infrastrukturdienstleister im Wege der Auftragsverarbeitung. Das Webhosting sowie die globale Bereitstellung der Applikationsdaten erfolgen über die Vercel Inc., 340 S Lemon Ave #4133, Walnut, CA 91789, USA [Link zu Vercel Privacy einfügen]. Die Bereitstellung der Cloud-Datenbank sowie der Backend-Dienste wird über die Supabase Inc., 970 Toa Payoh North #07-04, Singapur, abgewickelt, wobei das konkrete Datenbankprojekt in einer dedizierten europäischen Serverregion [z.B. EU-Zentral / Frankfurt] betrieben wird [Link zu Supabase Privacy einfügen]. Diese Dienstleister verarbeiten Daten streng weisungsgebunden und nur insoweit, als dies für die technische Infrastrukturbereitstellung zwingend geboten ist.",
+      "Für den technischen Betrieb der Plattform bedient sich der Verantwortliche spezialisierter Infrastrukturdienstleister im Wege der Auftragsverarbeitung. Das Webhosting sowie die globale Bereitstellung der Applikationsdaten erfolgen über die Vercel Inc., 340 S Lemon Ave #4133, Walnut, CA 91789, USA [https://vercel.com/security]. Die Bereitstellung der Cloud-Datenbank sowie der Backend-Dienste wird über die Supabase Inc., 970 Toa Payoh North #07-04, Singapur, abgewickelt, wobei das konkrete Datenbankprojekt in einer dedizierten europäischen Serverregion [z.B. EU-Zentral / Frankfurt] betrieben wird [https://supabase.com/privacy]. Diese Dienstleister verarbeiten Daten streng weisungsgebunden und nur insoweit, als dies für die technische Infrastrukturbereitstellung zwingend geboten ist.",
     ],
   },
   {
