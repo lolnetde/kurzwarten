@@ -32,8 +32,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="de" className="h-full antialiased" suppressHydrationWarning>
-      <body className="flex min-h-full flex-col">
+      <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body className="flex min-h-full flex-col">
         <Navbar />
         <div className="flex-1">{children}</div>
         <Footer />

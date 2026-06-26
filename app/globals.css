@@ -65,6 +65,12 @@ input:focus-visible {
   background: #24344d !important;
 }
 
+.dark .bg-slate-200,
+.dark .bg-slate-300,
+.dark .disabled\:bg-slate-300:disabled {
+  background: #334155 !important;
+}
+
 .dark .bg-blue-50 {
   background: #12283f !important;
 }
