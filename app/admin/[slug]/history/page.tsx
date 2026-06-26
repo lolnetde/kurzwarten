@@ -4,6 +4,12 @@ import {
   getCurrentAdminSession,
   logoutAdminSession,
 } from "@/lib/admin-session";
+import {
+  clearAdminPortalCache,
+  getAdminPortalCache,
+  setCachedAdminCompany,
+  setCachedAdminHistory,
+} from "@/lib/admin-portal-cache";
 import { ButtonSpinner, HistorySkeleton, PanelSkeleton } from "@/components/LoadingStates";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
@@ -66,7 +72,9 @@ export default function CompanyHistoryPage() {
         const data = await response.json();
 
         if (data.success) {
-          setHistory(data.history ?? []);
+          const loadedHistory = data.history ?? [];
+          setHistory(loadedHistory);
+          setCachedAdminHistory(slug, loadedHistory);
           setMessage("");
         } else {
           setMessage(data.error ?? "Statistiken konnten nicht geladen werden.");
@@ -82,25 +90,47 @@ export default function CompanyHistoryPage() {
 
   useEffect(() => {
     const timeout = window.setTimeout(async () => {
+      const cachedPortal = getAdminPortalCache(slug);
+      const hasCachedHistory = Boolean(cachedPortal?.history);
+
+      if (cachedPortal?.company) {
+        setCompany(cachedPortal.company);
+        setIsUnlocked(true);
+        setIsLoadingCompany(false);
+      }
+
+      if (cachedPortal?.history) {
+        setHistory(cachedPortal.history);
+        setIsLoadingHistory(false);
+      }
+
       try {
-        const response = await fetch(`/api/company/${slug}`);
-        const data = await response.json();
+        setIsUnlocking(!cachedPortal?.company);
 
-        if (data.success) {
-          setCompany(data.company);
+        const sessionData = await getCurrentAdminSession(slug);
 
-          setIsUnlocking(true);
+        if (sessionData.success) {
+          setCompany(sessionData.company);
+          setCachedAdminCompany(slug, sessionData.company);
+          setPassword("");
+          setIsUnlocked(true);
 
-          const sessionData = await getCurrentAdminSession(slug);
-
-          if (sessionData.success) {
-            setCompany(sessionData.company);
-            setPassword("");
-            setIsUnlocked(true);
+          if (!hasCachedHistory) {
             await loadHistory();
           }
         } else {
-          setMessage(data.error ?? "Unternehmen wurde nicht gefunden.");
+          clearAdminPortalCache(slug);
+          setIsUnlocked(false);
+          setHistory([]);
+
+          const response = await fetch(`/api/company/${slug}`);
+          const data = await response.json();
+
+          if (data.success) {
+            setCompany(data.company);
+          } else {
+            setMessage(data.error ?? "Unternehmen wurde nicht gefunden.");
+          }
         }
       } catch {
         setMessage("Unternehmen konnte nicht geladen werden.");
@@ -136,6 +166,7 @@ export default function CompanyHistoryPage() {
 
       if (data.success) {
         setCompany(data.company);
+        setCachedAdminCompany(slug, data.company);
         setPassword("");
         setIsUnlocked(true);
         await loadHistory();

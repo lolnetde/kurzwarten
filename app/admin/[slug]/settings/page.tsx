@@ -4,6 +4,14 @@ import {
   getCurrentAdminSession,
   logoutAdminSession,
 } from "@/lib/admin-session";
+import {
+  clearAdminPortalCache,
+  getAdminPortalCache,
+  setCachedAdminCompany,
+  setCachedAdminDoctors,
+  type CachedAdminCompany,
+  type CachedAdminDoctor,
+} from "@/lib/admin-portal-cache";
 import { ButtonSpinner, PanelSkeleton } from "@/components/LoadingStates";
 import {
   DEFAULT_WAIT_TIME_DISCLAIMER,
@@ -101,60 +109,81 @@ export default function CompanySettingsPage() {
     [doctors]
   );
 
+  const applyCompany = useCallback((nextCompany: CachedAdminCompany) => {
+    setCompany(nextCompany as Company);
+    setAddress(nextCompany.address ?? "");
+    setPostalCode(nextCompany.postal_code ?? "");
+    setCity(nextCompany.city ?? "");
+    setWaitTimeDisclaimer(
+      nextCompany.wait_time_disclaimer ?? DEFAULT_WAIT_TIME_DISCLAIMER
+    );
+    setEnvironmentType(
+      normalizeCompanyEnvironment(nextCompany.environment_type)
+    );
+  }, []);
+
+  const applyDoctorRows = useCallback((doctorRows: CachedAdminDoctor[]) => {
+    setDoctors(doctorRows.map(mapDoctorRow));
+  }, []);
+
   const loadDoctors = useCallback(async () => {
     const response = await fetch(`/api/company/${slug}/doctors`);
     const data = await response.json();
 
     if (data.success) {
-      setDoctors((data.doctors ?? []).map(mapDoctorRow));
+      const loadedDoctors = data.doctors ?? [];
+      applyDoctorRows(loadedDoctors);
+      setCachedAdminDoctors(slug, loadedDoctors);
       return;
     }
 
     setMessageType("error");
     setMessage(data.error ?? "Team konnte nicht geladen werden.");
-  }, [slug]);
+  }, [applyDoctorRows, slug]);
 
   useEffect(() => {
     const timeout = window.setTimeout(async () => {
+      const cachedPortal = getAdminPortalCache(slug);
+      const hasCachedDoctors = Boolean(cachedPortal?.doctors);
+
+      if (cachedPortal?.company) {
+        applyCompany(cachedPortal.company);
+        setIsUnlocked(true);
+        setIsLoading(false);
+      }
+
+      if (cachedPortal?.doctors) {
+        applyDoctorRows(cachedPortal.doctors);
+      }
+
       try {
-        const response = await fetch(`/api/company/${slug}`);
-        const data = await response.json();
-
-        if (data.success) {
-          setCompany(data.company);
-          setAddress(data.company.address ?? "");
-          setPostalCode(data.company.postal_code ?? "");
-          setCity(data.company.city ?? "");
-          setWaitTimeDisclaimer(
-            data.company.wait_time_disclaimer ?? DEFAULT_WAIT_TIME_DISCLAIMER
-          );
-          setEnvironmentType(
-            normalizeCompanyEnvironment(data.company.environment_type)
-          );
-        } else {
-          setMessageType("error");
-          setMessage(data.error ?? "Einrichtung wurde nicht gefunden.");
-        }
-
-        setIsUnlocking(true);
+        setIsUnlocking(!cachedPortal?.company);
 
         const sessionData = await getCurrentAdminSession(slug);
 
         if (sessionData.success) {
-          setCompany(sessionData.company);
-          setAddress(sessionData.company.address ?? "");
-          setPostalCode(sessionData.company.postal_code ?? "");
-          setCity(sessionData.company.city ?? "");
-          setWaitTimeDisclaimer(
-            sessionData.company.wait_time_disclaimer ??
-              DEFAULT_WAIT_TIME_DISCLAIMER
-          );
-          setEnvironmentType(
-            normalizeCompanyEnvironment(sessionData.company.environment_type)
-          );
+          applyCompany(sessionData.company);
+          setCachedAdminCompany(slug, sessionData.company);
           setPassword("");
           setIsUnlocked(true);
-          await loadDoctors();
+
+          if (!hasCachedDoctors) {
+            await loadDoctors();
+          }
+        } else {
+          clearAdminPortalCache(slug);
+          setIsUnlocked(false);
+          setDoctors([]);
+
+          const response = await fetch(`/api/company/${slug}`);
+          const data = await response.json();
+
+          if (data.success) {
+            applyCompany(data.company);
+          } else {
+            setMessageType("error");
+            setMessage(data.error ?? "Einrichtung wurde nicht gefunden.");
+          }
         }
       } catch {
         setMessageType("error");
@@ -167,7 +196,7 @@ export default function CompanySettingsPage() {
     }, 0);
 
     return () => window.clearTimeout(timeout);
-  }, [loadDoctors, slug]);
+  }, [applyCompany, applyDoctorRows, loadDoctors, slug]);
 
   function setDoctorCount(nextCount: number) {
     const cleanCount = Math.max(0, Math.min(20, nextCount));
@@ -225,16 +254,8 @@ export default function CompanySettingsPage() {
       const data = await response.json();
 
       if (data.success) {
-        setCompany(data.company);
-        setAddress(data.company.address ?? "");
-        setPostalCode(data.company.postal_code ?? "");
-        setCity(data.company.city ?? "");
-        setWaitTimeDisclaimer(
-          data.company.wait_time_disclaimer ?? DEFAULT_WAIT_TIME_DISCLAIMER
-        );
-        setEnvironmentType(
-          normalizeCompanyEnvironment(data.company.environment_type)
-        );
+        applyCompany(data.company);
+        setCachedAdminCompany(slug, data.company);
         setPassword("");
         setIsUnlocked(true);
         await loadDoctors();
@@ -339,17 +360,12 @@ export default function CompanySettingsPage() {
         return;
       }
 
-      setCompany(companyData.company);
-      setAddress(companyData.company.address ?? "");
-      setPostalCode(companyData.company.postal_code ?? "");
-      setCity(companyData.company.city ?? "");
-      setWaitTimeDisclaimer(
-        companyData.company.wait_time_disclaimer ?? normalizedWaitTimeDisclaimer
-      );
-      setEnvironmentType(
-        normalizeCompanyEnvironment(companyData.company.environment_type)
-      );
-      setDoctors((doctorsData.doctors ?? []).map(mapDoctorRow));
+      applyCompany(companyData.company);
+      setCachedAdminCompany(slug, companyData.company);
+
+      const savedDoctors = doctorsData.doctors ?? [];
+      applyDoctorRows(savedDoctors);
+      setCachedAdminDoctors(slug, savedDoctors);
       setMessageType("success");
       setMessage("Einstellungen gespeichert.");
     } catch {

@@ -1,3 +1,5 @@
+import { clearAdminPortalCache } from "@/lib/admin-portal-cache";
+
 const LEGACY_STORAGE_PREFIX = "kurzwarten-admin-session";
 
 function getLegacyStorageKey(slug: string) {
@@ -26,6 +28,7 @@ export async function getCurrentAdminSession(slug: string) {
 
 export async function logoutAdminSession(slug: string) {
   clearLegacyAdminPassword(slug);
+  clearAdminPortalCache(slug);
 
   try {
     await fetch("/api/company-admin-logout", {

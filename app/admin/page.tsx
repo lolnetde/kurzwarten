@@ -3,6 +3,7 @@
 import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
 import { ButtonSpinner } from "@/components/LoadingStates";
+import { setCachedAdminCompany } from "@/lib/admin-portal-cache";
 import { logoutAdminSession } from "@/lib/admin-session";
 import {
   COMPANY_ENVIRONMENTS,
@@ -68,6 +69,7 @@ export default function AdminOverviewPage() {
 
         if (isMounted && data.success) {
           setActiveAdminCompany(data.company);
+          setCachedAdminCompany(data.company.slug, data.company);
         }
       } catch {
         // The normal login form remains available if the session check fails.
@@ -84,12 +86,6 @@ export default function AdminOverviewPage() {
       isMounted = false;
     };
   }, []);
-
-  function openActiveAdminPortal() {
-    if (!activeAdminCompany) return;
-
-    window.location.href = `/admin/${activeAdminCompany.slug}`;
-  }
 
   async function logoutActiveAdminSession() {
     if (!activeAdminCompany) return;
@@ -233,12 +229,12 @@ export default function AdminOverviewPage() {
               </h2>
 
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <button
-                  onClick={openActiveAdminPortal}
-                  className="h-12 rounded-lg bg-blue-700 px-5 font-semibold text-white hover:bg-blue-800"
+                <Link
+                  href={`/admin/${activeAdminCompany.slug}`}
+                  className="flex h-12 items-center justify-center rounded-lg bg-blue-700 px-5 font-semibold text-white hover:bg-blue-800"
                 >
                   Portal öffnen
-                </button>
+                </Link>
                 <button
                   onClick={logoutActiveAdminSession}
                   disabled={isLoggingOut}

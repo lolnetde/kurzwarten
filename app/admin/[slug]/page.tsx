@@ -5,6 +5,13 @@ import {
   getCurrentAdminSession,
   logoutAdminSession,
 } from "@/lib/admin-session";
+import {
+  clearAdminPortalCache,
+  getAdminPortalCache,
+  setCachedAdminCompany,
+  setCachedAdminDoctors,
+  setCachedAdminTickets,
+} from "@/lib/admin-portal-cache";
 import { ButtonSpinner, PanelSkeleton, TicketListSkeleton } from "@/components/LoadingStates";
 import { getCompanyEnvironmentCopy } from "@/lib/company-environments";
 import {
@@ -45,6 +52,26 @@ type Doctor = {
   treatment_time_min: number;
   treatment_time_max: number;
 };
+
+function toAdminCompany(company: {
+  id: string;
+  name: string;
+  slug: string;
+  address?: string | null;
+  postal_code?: string | null;
+  city?: string | null;
+  environment_type?: string | null;
+}): Company {
+  return {
+    id: company.id,
+    name: company.name,
+    slug: company.slug,
+    address: company.address ?? null,
+    postal_code: company.postal_code ?? null,
+    city: company.city ?? null,
+    environment_type: company.environment_type ?? null,
+  };
+}
 
 function getStatusLabel(status: string) {
   if (status === "called") return "Aufgerufen";
@@ -258,6 +285,20 @@ export default function CompanyAdminPage() {
     return true;
   });
 
+  const applyDoctors = useCallback((loadedDoctors: Doctor[]) => {
+    setDoctors(loadedDoctors);
+    setSelectedDoctorId((currentDoctorId) => {
+      if (
+        currentDoctorId &&
+        loadedDoctors.some((doctor) => doctor.id === currentDoctorId)
+      ) {
+        return currentDoctorId;
+      }
+
+      return loadedDoctors[0]?.id ?? "";
+    });
+  }, []);
+
   const loadTickets = useCallback(async () => {
     setIsLoadingTickets(true);
 
@@ -267,7 +308,11 @@ export default function CompanyAdminPage() {
 
       if (data.success) {
         setCompany(data.company);
-        setTickets(data.tickets ?? []);
+        setCachedAdminCompany(slug, data.company);
+
+        const loadedTickets = data.tickets ?? [];
+        setTickets(loadedTickets);
+        setCachedAdminTickets(slug, loadedTickets);
       } else {
         setMessage(data.error ?? "Tickets konnten nicht geladen werden.");
       }
@@ -313,24 +358,15 @@ export default function CompanyAdminPage() {
 
       if (data.success) {
         const loadedDoctors = data.doctors ?? [];
-        setDoctors(loadedDoctors);
-        setSelectedDoctorId((currentDoctorId) => {
-          if (
-            currentDoctorId &&
-            loadedDoctors.some((doctor: Doctor) => doctor.id === currentDoctorId)
-          ) {
-            return currentDoctorId;
-          }
-
-          return loadedDoctors[0]?.id ?? "";
-        });
+        applyDoctors(loadedDoctors);
+        setCachedAdminDoctors(slug, loadedDoctors);
       } else {
         setMessage(data.error ?? "Team konnte nicht geladen werden.");
       }
     } catch {
       setMessage("Team konnte nicht geladen werden.");
     }
-  }, [slug]);
+  }, [applyDoctors, slug]);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -354,24 +390,61 @@ export default function CompanyAdminPage() {
 
   useEffect(() => {
     const timeout = window.setTimeout(async () => {
+      const cachedPortal = getAdminPortalCache(slug);
+      const hasCachedTickets = Boolean(cachedPortal?.tickets);
+      const hasCachedDoctors = Boolean(cachedPortal?.doctors);
+
+      if (cachedPortal?.company) {
+        setCompany(toAdminCompany(cachedPortal.company));
+        setIsUnlocked(true);
+        setIsLoadingCompany(false);
+      }
+
+      if (cachedPortal?.tickets) {
+        setTickets(cachedPortal.tickets);
+        setIsLoadingTickets(false);
+      }
+
+      if (cachedPortal?.doctors) {
+        applyDoctors(cachedPortal.doctors);
+      }
+
       try {
-        const response = await fetch(`/api/company/${slug}`);
-        const data = await response.json();
+        setIsUnlocking(!cachedPortal?.company);
 
-        if (data.success) {
-          setCompany(data.company);
+        const sessionData = await getCurrentAdminSession(slug);
 
-          setIsUnlocking(true);
+        if (sessionData.success) {
+          setCompany(sessionData.company);
+          setCachedAdminCompany(slug, sessionData.company);
+          setIsUnlocked(true);
 
-          const sessionData = await getCurrentAdminSession(slug);
+          const loadingTasks = [];
 
-          if (sessionData.success) {
-            setCompany(sessionData.company);
-            setIsUnlocked(true);
-            await Promise.all([loadTickets(), loadDoctors()]);
+          if (!hasCachedTickets) {
+            loadingTasks.push(loadTickets());
           }
+
+          if (!hasCachedDoctors) {
+            loadingTasks.push(loadDoctors());
+          }
+
+          await Promise.all(loadingTasks);
         } else {
-          setMessage(data.error ?? "Unternehmen wurde nicht gefunden.");
+          clearAdminPortalCache(slug);
+          setIsUnlocked(false);
+          setTickets([]);
+          setDoctors([]);
+          setSelectedDoctorId("");
+
+          const response = await fetch(`/api/company/${slug}`);
+          const data = await response.json();
+
+          if (data.success) {
+            setCompany(data.company);
+          } else {
+            setMessage(data.error ?? "Unternehmen wurde nicht gefunden.");
+          }
         }
       } catch {
         setMessage("Unternehmen konnte nicht geladen werden.");
@@ -383,7 +456,7 @@ export default function CompanyAdminPage() {
     }, 0);
 
     return () => window.clearTimeout(timeout);
-  }, [loadDoctors, loadTickets, slug]);
+  }, [applyDoctors, loadDoctors, loadTickets, slug]);
 
   async function unlockAdmin() {
     setMessage("");
@@ -412,6 +485,8 @@ export default function CompanyAdminPage() {
       const data = await response.json();
 
       if (data.success) {
+        setCompany(data.company);
+        setCachedAdminCompany(slug, data.company);
         setIsUnlocked(true);
         setPassword("");
         await Promise.all([loadTickets(), loadDoctors()]);
@@ -545,8 +620,8 @@ export default function CompanyAdminPage() {
   function applyTicketOrderPreview(nextTicketIds: number[]) {
     rememberTicketRowPositions();
 
-    setTickets((currentTickets) =>
-      currentTickets.map((ticket) => {
+    setTickets((currentTickets) => {
+      const nextTickets = currentTickets.map((ticket) => {
         const nextPosition = nextTicketIds.indexOf(ticket.id);
 
         if (nextPosition === -1) {
@@ -557,8 +632,11 @@ export default function CompanyAdminPage() {
           ...ticket,
           queue_position: nextPosition + 1,
         };
-      })
-    );
+      });
+
+      setCachedAdminTickets(slug, nextTickets);
+      return nextTickets;
+    });
     setPendingTicketOrder(nextTicketIds);
   }
 
@@ -698,13 +776,16 @@ export default function CompanyAdminPage() {
       const data = await response.json();
 
       if (data.success) {
-        setTickets((currentTickets) =>
-          currentTickets.map((ticket) =>
+        setTickets((currentTickets) => {
+          const nextTickets = currentTickets.map((ticket) =>
             ticket.id === ticketId
               ? { ...ticket, customer_name: trimmedName }
               : ticket
-          )
-        );
+          );
+
+          setCachedAdminTickets(slug, nextTickets);
+          return nextTickets;
+        });
         cancelEditingName();
       } else {
         setMessage(data.error ?? "Name konnte nicht gespeichert werden.");
