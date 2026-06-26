@@ -3,6 +3,7 @@
 import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
 import { ButtonSpinner } from "@/components/LoadingStates";
+import { logoutAdminSession } from "@/lib/admin-session";
 import {
   COMPANY_ENVIRONMENTS,
   DEFAULT_COMPANY_ENVIRONMENT,
@@ -10,7 +11,7 @@ import {
   normalizeCompanyEnvironment,
   type CompanyEnvironment,
 } from "@/lib/company-environments";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Company = {
   id: string;
@@ -29,10 +30,15 @@ export default function AdminOverviewPage() {
   const [environmentType, setEnvironmentType] = useState<CompanyEnvironment>(
     DEFAULT_COMPANY_ENVIRONMENT
   );
+  const [activeAdminCompany, setActiveAdminCompany] = useState<Company | null>(
+    null
+  );
   const [createdCompany, setCreatedCompany] = useState<Company | null>(null);
   const [loginMessage, setLoginMessage] = useState("");
   const [registerMessage, setRegisterMessage] = useState("");
+  const [isCheckingAdminSession, setIsCheckingAdminSession] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
   const trimmedLoginName = loginName.trim();
@@ -43,12 +49,60 @@ export default function AdminOverviewPage() {
   const isPasswordTooShort =
     trimmedCompanyPassword.length > 0 &&
     trimmedCompanyPassword.length < MIN_PASSWORD_LENGTH;
-  const canOpenCompany = trimmedLoginName.length > 0 && !isLoggingIn;
+  const isLoginSuccessMessage = loginMessage === "Abgemeldet.";
+  const canOpenCompany =
+    trimmedLoginName.length > 0 && !isLoggingIn && !isCheckingAdminSession;
   const canCreateCompany =
     trimmedCompanyName.length > 0 &&
     trimmedCompanyPassword.length >= MIN_PASSWORD_LENGTH &&
     !isNameTooLong &&
     !isCreating;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadActiveAdminSession() {
+      try {
+        const response = await fetch("/api/company-admin-session");
+        const data = await response.json();
+
+        if (isMounted && data.success) {
+          setActiveAdminCompany(data.company);
+        }
+      } catch {
+        // The normal login form remains available if the session check fails.
+      } finally {
+        if (isMounted) {
+          setIsCheckingAdminSession(false);
+        }
+      }
+    }
+
+    void loadActiveAdminSession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  function openActiveAdminPortal() {
+    if (!activeAdminCompany) return;
+
+    window.location.href = `/admin/${activeAdminCompany.slug}`;
+  }
+
+  async function logoutActiveAdminSession() {
+    if (!activeAdminCompany) return;
+
+    setLoginMessage("");
+    setIsLoggingOut(true);
+
+    await logoutAdminSession(activeAdminCompany.slug);
+
+    setActiveAdminCompany(null);
+    setIsLoggingOut(false);
+    setLoginMessage("Abgemeldet.");
+  }
 
   async function openCompany() {
     setLoginMessage("");
@@ -152,49 +206,103 @@ export default function AdminOverviewPage() {
             Für Teams
           </p>
           <h1 className="mt-1 text-4xl font-bold leading-tight">
-            Adminbereich öffnen
+            {activeAdminCompany ? "Du bist angemeldet" : "Adminbereich öffnen"}
           </h1>
           <p className="mt-4 text-lg leading-8 text-slate-600">
-            Gib den Namen deiner Einrichtung oder deines Unternehmens ein. Das
-            Passwort wird anschließend auf der Adminseite abgefragt.
+            {isCheckingAdminSession
+              ? "Wir prüfen, ob du bereits in einem Adminbereich angemeldet bist."
+              : activeAdminCompany
+                ? `Du bist aktuell im Portal von ${activeAdminCompany.name} angemeldet.`
+                : "Gib den Namen deiner Einrichtung oder deines Unternehmens ein. Das Passwort wird anschließend auf der Adminseite abgefragt."}
           </p>
 
-          <label className="mt-7 block text-sm font-semibold text-slate-700">
-            Einrichtung oder Unternehmen
-          </label>
-          <input
-            value={loginName}
-            onChange={(event) => {
-              setLoginName(event.target.value);
-              setLoginMessage("");
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && canOpenCompany) {
-                event.preventDefault();
-                void openCompany();
-              }
-            }}
-            className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-slate-950"
-            placeholder="z. B. Hausarzt Müller, Salon Schnittpunkt"
-          />
+          {isCheckingAdminSession && (
+            <div className="mt-7 flex h-12 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-4 font-semibold text-slate-600">
+              <ButtonSpinner />
+              Session wird geprüft...
+            </div>
+          )}
 
-          <button
-            onClick={openCompany}
-            disabled={!canOpenCompany}
-            className="mt-5 h-12 w-full rounded-lg bg-blue-700 px-5 font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
-          >
-            {isLoggingIn ? (
-              <span className="inline-flex items-center justify-center gap-2">
-                <ButtonSpinner />
-                Wird geöffnet...
-              </span>
-            ) : (
-              "Weiter zum Adminbereich"
-            )}
-          </button>
+          {!isCheckingAdminSession && activeAdminCompany && (
+            <div className="mt-7 rounded-lg border border-blue-200 bg-blue-50 p-4">
+              <p className="text-sm font-semibold text-blue-800">
+                Aktives Portal
+              </p>
+              <h2 className="mt-1 text-2xl font-bold text-slate-950">
+                {activeAdminCompany.name}
+              </h2>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <button
+                  onClick={openActiveAdminPortal}
+                  className="h-12 rounded-lg bg-blue-700 px-5 font-semibold text-white hover:bg-blue-800"
+                >
+                  Portal öffnen
+                </button>
+                <button
+                  onClick={logoutActiveAdminSession}
+                  disabled={isLoggingOut}
+                  className="h-12 rounded-lg border border-red-200 bg-white px-5 font-semibold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isLoggingOut ? (
+                    <span className="inline-flex items-center justify-center gap-2">
+                      <ButtonSpinner />
+                      Wird abgemeldet...
+                    </span>
+                  ) : (
+                    "Abmelden"
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!isCheckingAdminSession && !activeAdminCompany && (
+            <>
+              <label className="mt-7 block text-sm font-semibold text-slate-700">
+                Einrichtung oder Unternehmen
+              </label>
+              <input
+                value={loginName}
+                onChange={(event) => {
+                  setLoginName(event.target.value);
+                  setLoginMessage("");
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && canOpenCompany) {
+                    event.preventDefault();
+                    void openCompany();
+                  }
+                }}
+                className="mt-2 h-12 w-full rounded-lg border border-slate-300 bg-white px-4 text-slate-950"
+                placeholder="z. B. Hausarzt Müller, Salon Schnittpunkt"
+              />
+
+              <button
+                onClick={openCompany}
+                disabled={!canOpenCompany}
+                className="mt-5 h-12 w-full rounded-lg bg-blue-700 px-5 font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
+              >
+                {isLoggingIn ? (
+                  <span className="inline-flex items-center justify-center gap-2">
+                    <ButtonSpinner />
+                    Wird geöffnet...
+                  </span>
+                ) : (
+                  "Weiter zum Adminbereich"
+                )}
+              </button>
+            </>
+          )}
 
           {loginMessage && (
-            <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm font-semibold text-red-700">
+            <p
+              className={`mt-4 rounded-lg p-3 text-sm font-semibold ${
+                isLoginSuccessMessage
+                  ? "bg-emerald-50 text-emerald-700"
+                  : "bg-red-50 text-red-700"
+              }`}
+            >
               {loginMessage}
             </p>
           )}

@@ -1,4 +1,4 @@
-import { requireAdminSession } from "@/lib/admin-auth";
+import { getAdminSession, requireAdminSession } from "@/lib/admin-auth";
 import { supabaseServer } from "@/lib/supabase-server";
 import { NextResponse } from "next/server";
 
@@ -20,6 +20,62 @@ function isMissingCompanyProfileError(error: { message?: string } | null) {
     message.includes("wait_time_disclaimer") ||
     message.includes("environment_type")
   );
+}
+
+async function getCompanyForAdminSession(companyId: string, slug: string) {
+  let { data, error } = await supabaseServer
+    .from("companies")
+    .select(
+      "id, name, slug, address, postal_code, city, wait_time_disclaimer, environment_type"
+    )
+    .eq("id", companyId)
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (isMissingCompanyProfileError(error)) {
+    const fallbackResult = await supabaseServer
+      .from("companies")
+      .select("id, name, slug, address, postal_code, city")
+      .eq("id", companyId)
+      .eq("slug", slug)
+      .maybeSingle();
+
+    data = fallbackResult.data
+      ? {
+          ...fallbackResult.data,
+          wait_time_disclaimer: null,
+          environment_type: null,
+        }
+      : null;
+    error = fallbackResult.error;
+  }
+
+  return { company: data as CompanyRow | null, error };
+}
+
+export async function GET() {
+  const session = await getAdminSession();
+
+  if (!session) {
+    return NextResponse.json(
+      { success: false, error: "Bitte melde dich erneut an." },
+      { status: 401 }
+    );
+  }
+
+  const { company, error } = await getCompanyForAdminSession(
+    session.companyId,
+    session.slug
+  );
+
+  if (error || !company) {
+    return NextResponse.json(
+      { success: false, error: "Session konnte nicht geprueft werden." },
+      { status: 401 }
+    );
+  }
+
+  return NextResponse.json({ success: true, company });
 }
 
 export async function POST(request: Request) {
@@ -49,34 +105,10 @@ export async function POST(request: Request) {
     return auth.response;
   }
 
-  let { data, error } = await supabaseServer
-    .from("companies")
-    .select(
-      "id, name, slug, address, postal_code, city, wait_time_disclaimer, environment_type"
-    )
-    .eq("id", auth.session.companyId)
-    .eq("slug", slug)
-    .maybeSingle();
-
-  if (isMissingCompanyProfileError(error)) {
-    const fallbackResult = await supabaseServer
-      .from("companies")
-      .select("id, name, slug, address, postal_code, city")
-      .eq("id", auth.session.companyId)
-      .eq("slug", slug)
-      .maybeSingle();
-
-    data = fallbackResult.data
-      ? {
-          ...fallbackResult.data,
-          wait_time_disclaimer: null,
-          environment_type: null,
-        }
-      : null;
-    error = fallbackResult.error;
-  }
-
-  const company = data as CompanyRow | null;
+  const { company, error } = await getCompanyForAdminSession(
+    auth.session.companyId,
+    slug
+  );
 
   if (error || !company) {
     return NextResponse.json(

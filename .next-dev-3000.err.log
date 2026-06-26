@@ -65,3 +65,137 @@ https://react.dev/link/hydration-mismatch
   44 |         d="M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"
   45 |         stroke="currentColor"
   46 |         strokeLinecap="round"
+[browser] Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using template tag instead (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template). 
+[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <HTTPAccessFallbackErrorBoundary pathname="/admin/paypal" notFound={<NotAllowedRootHTTPFallbackError>} ...>
+      <RedirectBoundary>
+        <RedirectErrorBoundary router={{...}}>
+          <Head>
+          <__next_root_layout_boundary__>
+            <SegmentViewNode type="layout" pagePath="layout.tsx">
+              <SegmentTrieNode>
+              <link>
+              <script>
+              <script>
+              <script>
+              <RootLayout>
+                <html lang="de" className="h-full ant..." suppressHydrationWarning={true}>
+                  <body className="flex min-h...">
+                    <script>
+                    <Navbar>
+                      <nav className="border-b b...">
+                        ...
+                          <ThemeToggle>
+                            <button type="button" onClick={function toggleTheme} className="inline-fle..." ...>
+                              <SunIcon>
+                                <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24">
+                                  <path
++                                   d="M12 4V2M12 22v-2M4.9 4.9 3.5 3.5M20.5 20.5l-1.4-1.4M4 12H2M22 12h-2M4.9 19.1l-1..."
+-                                   d="M20.4 14.3A7.8 7.8 0 0 1 9.7 3.6 8.8 8.8 0 1 0 20.4 14.3Z"
+                                    stroke="currentColor"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                  >
++                                 <path
++                                   d="M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"
++                                   stroke="currentColor"
++                                   strokeLinecap="round"
++                                   strokeLinejoin="round"
++                                   strokeWidth="2"
++                                 >
+                    ...
+          ...
+
+    at <unknown> (https://react.dev/link/hydration-mismatch)
+    at path (<anonymous>)
+    at SunIcon (components/ThemeToggle.tsx:43:7)
+    at ThemeToggle (components/ThemeToggle.tsx:99:17)
+    at Navbar (components\Navbar.tsx:18:11)
+    at RootLayout (app\layout.tsx:37:9)
+  41 |         strokeWidth="2"
+  42 |       />
+> 43 |       <path
+     |       ^
+  44 |         d="M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"
+  45 |         stroke="currentColor"
+  46 |         strokeLinecap="round"
+[browser] Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using template tag instead (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template). 
+[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <HTTPAccessFallbackErrorBoundary pathname="/admin/pay..." notFound={<NotAllowedRootHTTPFallbackError>} ...>
+      <RedirectBoundary>
+        <RedirectErrorBoundary router={{...}}>
+          <Head>
+          <__next_root_layout_boundary__>
+            <SegmentViewNode type="layout" pagePath="layout.tsx">
+              <SegmentTrieNode>
+              <link>
+              <script>
+              <script>
+              <script>
+              <RootLayout>
+                <html lang="de" className="h-full ant..." suppressHydrationWarning={true}>
+                  <body className="flex min-h...">
+                    <script>
+                    <Navbar>
+                      <nav className="border-b b...">
+                        ...
+                          <ThemeToggle>
+                            <button type="button" onClick={function toggleTheme} className="inline-fle..." ...>
+                              <SunIcon>
+                                <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24">
+                                  <path
++                                   d="M12 4V2M12 22v-2M4.9 4.9 3.5 3.5M20.5 20.5l-1.4-1.4M4 12H2M22 12h-2M4.9 19.1l-1..."
+-                                   d="M20.4 14.3A7.8 7.8 0 0 1 9.7 3.6 8.8 8.8 0 1 0 20.4 14.3Z"
+                                    stroke="currentColor"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                  >
++                                 <path
++                                   d="M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"
++                                   stroke="currentColor"
++                                   strokeLinecap="round"
++                                   strokeLinejoin="round"
++                                   strokeWidth="2"
++                                 >
+                    ...
+          ...
+
+    at <unknown> (https://react.dev/link/hydration-mismatch)
+    at path (<anonymous>)
+    at SunIcon (components/ThemeToggle.tsx:43:7)
+    at ThemeToggle (components/ThemeToggle.tsx:99:17)
+    at Navbar (components\Navbar.tsx:18:11)
+    at RootLayout (app\layout.tsx:37:9)
+  41 |         strokeWidth="2"
+  42 |       />
+> 43 |       <path
+     |       ^
+  44 |         d="M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"
+  45 |         stroke="currentColor"
+  46 |         strokeLinecap="round"
