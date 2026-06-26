@@ -1,442 +1,133 @@
+const sections = [
+  {
+    title: "Allgemeine Informationen und Identität des Verantwortlichen",
+    content: [
+      "Diese Datenschutzerklärung dient der Erfüllung der gesetzlichen Informationspflichten gemäß Art. 13 der Verordnung (EU) 2016/679 (Datenschutz-Grundverordnung, im Folgenden „DSGVO“) und informiert die Nutzer vollumfänglich über die Art, den Umfang und den Zweck der Verarbeitung personenbezogener Daten im Rahmen der Nutzung der digitalen Warteschlangen-Lösung „KurzWarten“. Dieses System ermöglicht es Unternehmen, Praxen, Behörden, Dienstleistern oder sonstigen Institutionen, digitale Tickets zu generieren, zu verwalten, visuell oder akustisch aufzurufen, als erledigt zu markieren sowie einer rein aggregierten statistischen Auswertung zuzuführen. Der datenschutzrechtlich Verantwortliche für die originären Datenverarbeitungsprozesse, welche im unmittelbaren Zusammenhang mit dem technischen Betrieb, der Bereitstellung der Systemarchitektur sowie der administrativen Verwaltung der Plattform stehen, ist wie folgt zu identifizieren und zu kontaktieren: [Name / Unternehmen, vollständige ladungsfähige Anschrift, E-Mail-Adresse, Telefonnummer, Webadresse].",
+    ],
+  },
+  {
+    title: "Begriffsbestimmungen nach der Datenschutz-Grundverordnung",
+    content: [
+      "Um dem Transparenzgebot Rechnung zu tragen, basieren die in dieser Erklärung verwendeten Begrifflichkeiten auf den offiziellen Definitionen des Art. 4 der DSGVO. Demnach bezeichnet „personenbezogene Daten“ alle Informationen, die sich auf eine identifizierte oder identifizierbare natürliche Person beziehen. Als verarbeitungspflichtiger Vorgang gilt jede mit oder ohne Hilfe automatisierter Verfahren ausgeführte Operation oder jede solche Vorgangsreihe im Zusammenhang mit personenbezogenen Daten, wie das Erheben, das Erfassen, die Organisation, das Ordnen, die Speicherung, die Anpassung oder Veränderung, das Auslesen, das Abfragen, die Verwendung, die Offenlegung durch Übermittlung, Verbreitung oder eine andere Form der Bereitstellung, den Abgleich oder die Verknüpfung, die Einschränkung, das Löschen oder die Vernichtung. Als „Verantwortlicher“ ist diejenige natürliche oder juristische Person, Behörde, Einrichtung oder andere Stelle anzusehen, die allein oder gemeinsam mit anderen über die Zwecke und Mittel der Verarbeitung von personenbezogenen Daten entscheidet.",
+    ],
+  },
+  {
+    title: "Abgrenzung der datenschutzrechtlichen Verantwortlichkeiten und Auftragsverarbeitung",
+    content: [
+      "Es wird ausdrücklich darauf hingewiesen, dass die Anwendung KurzWarten primär durch selbstständige Dritte wie Unternehmen, Arztpraxen, Behörden oder sonstige Dienstleistungsbetriebe implementiert und operativ eingesetzt wird, um logistische Abläufe im Rahmen des Warteraummanagements vor Ort zu koordinieren. Sofern ein solcher Geschäftskunde die Anwendung KurzWarten für seine individuellen organisatorischen Zwecke nutzt und eigenständig darüber entscheidet, ob, in welchem Umfang und unter welchen Bedingungen personenbezogene Merkmale von wartenden Personen erfasst werden, agiert das jeweilige nutzende Unternehmen als alleiniger Verantwortlicher im Sinne des Art. 4 Nr. 7 DSGVO. In diesem spezifischen Kontext wird der Betreiber von KurzWarten ausschließlich als technischer Dienstleister im Wege einer weisungsgebundenen Auftragsverarbeitung gemäß Art. 28 DSGVO für den Kunden tätig, wofür vor der produktiven Inbetriebnahme ein entsprechender Vertrag zur Auftragsverarbeitung (AVV) verbindlich geschlossen wird. Die Eigenverantwortung des Betreibers von KurzWarten beschränkt sich demnach strikt auf diejenigen Verarbeitungsprozesse, welche für die Bereitstellung der Netzinfrastruktur, die Plattformadministration, die Gewährleistung der IT-Sicherheit, die Systemfehleranalyse, die Abrechnungsmodalitäten sowie die allgemeine Vertragskommunikation mit den B2B-Kunden zwingend erforderlich sind.",
+    ],
+  },
+  {
+    title: "Umfang und Kategorien der verarbeiteten personenbezogenen Daten",
+    content: [
+      "Im Zuge der Nutzung der Anwendung KurzWarten werden systembedingt verschiedene Kategorien von Daten verarbeitet. Hierzu gehören die spezifisch generierte Ticketnummer, der jeweilige systemische Ticketstatus, welcher die Zustände wartend, aufgerufen, erledigt oder gelöscht annehmen kann, das zugeordnete Unternehmen nebst des konkreten Standorts, der zugewiesene Mitarbeiter, funktionale Raumnummern, logische Bereiche oder Schalter sowie sämtliche relevanten Zeitstempel wie namentlich der Erstellungszeitpunkt, der Aufrufzeitpunkt, der Erledigungszeitpunkt sowie der endgültige Löschzeitpunkt des jeweiligen Tickets. Darüber hinausgehend werden, sofern die Option durch den jeweiligen Vertragspartner aktiviert und vom Nutzer initiiert wurde, Namensangaben oder pseudonymisierte Kürzel der wartenden Person erfasst, wobei mithin auch technische Zugriffsdaten wie die IP-Adresse des anfragenden Endgeräts, Datum und Uhrzeit des Serverzugriffs, die konkret aufgerufene URL, der verwendete Browsertyp inklusive dessen Versionsstand, das Betriebssystem des Nutzers, die sogenannte Referrer-URL sowie etwaige auftretende Systemfehlermeldungen protokolliert werden, ergänzt um administrative Zugangsdaten im Adminbereich und lokale Browserdaten. Eine Erfassung eines Namens erfolgt ausschließlich zu dem Zweck, die Zuordnung vor Ort zu erleichtern, wobei das System explizit nicht für die Speicherung besonderer Kategorien personenbezogener Daten gemäß Art. 9 DSGVO, wie etwa Diagnosen, Behandlungsgründe oder sonstige Gesundheitsdaten, konzipiert ist und alle Akteure aufgefordert sind, von derartigen Eingaben gänzlich Abstand zu nehmen.",
+    ],
+  },
+  {
+    title: "Zwecke der Datenverarbeitung",
+    content: [
+      "Die Verarbeitung der oben bezeichneten Datenkategorien erfolgt zu genau definierten Zwecken, welche sich primär auf die technische Erstellung, logistische Verwaltung und visuelle Darstellung digitaler Warteschlangen, die Anzeige individueller Ticketnummern und der dazugehörigen Wartepositionen, die mathematische Schätzung und Anzeige voraussichtlicher Verweilzeiten sowie den operativen Aufruf, die Bearbeitung und die administrative Erledigung oder Löschung von Tickets im geschützten Adminbereich erstrecken. Des Weiteren dienen die Daten der Zuordnung von Tickets zu internen Betriebseinheiten, der Generierung rein aggregierter Tagesstatistiken ohne Personenbezug, der Gewährleistung der Systemstabilität, der Abwehr und Nachvollziehbarkeit von Missbrauchsszenarien, der technischen Fehleranalyse sowie der reibungslosen Durchführung der Vertragskommunikation, Kundenverwaltung und Rechnungsstellung gegenüber den registrierten Geschäftskunden.",
+    ],
+  },
+  {
+    title: "Rechtsgrundlagen der Verarbeitung",
+    content: [
+      "Die Rechtmäßigkeit der Verarbeitung resultiert je nach konkretem Kontext aus den Bestimmungen des Art. 6 Abs. 1 DSGVO. Die Verarbeitung von Ticketdaten zur Organisation des Warteraums basiert auf Art. 6 Abs. 1 lit. f DSGVO, wobei das berechtigte Interesse in der Optimierung und nutzerfreundlichen Strukturierung betrieblicher Abläufe liegt. Soweit die Verarbeitung zur Erfüllung eines Vertrages, dessen Vertragspartei die betroffene Person ist, oder zur Durchführung vorvertraglicher Maßnahmen erforderlich ist, dient Art. 6 Abs. 1 lit. b DSGVO als Rechtsgrundlage. Sofern steuerrechtliche oder sonstige gesetzliche Aufbewahrungspflichten berührt sind, erfolgt die Verarbeitung auf Basis von Art. 6 Abs. 1 lit. c DSGVO. Die Protokollierung technischer Zugriffsdaten zur Aufrechterhaltung der Netzsicherheit und Fehlerfreiheit stützt sich wiederum auf das berechtigte Interesse des Betreibers gemäß Art. 6 Abs. 1 lit. f DSGVO.",
+    ],
+  },
+  {
+    title: "Datenlöschung und granulare Speicherdauer",
+    content: [
+      "Hinsichtlich der Speicherdauer gilt das Prinzip der Datenminimierung. Aktive Ticketdaten, die im Rahmen einer Warteschlange generiert werden, verbleiben nur so lange im flüchtigen System, wie dies für den unmittelbaren Ablauf erforderlich ist. Ein Ticket, unabhängig davon, ob es mit einem optionalen Namen versehen wurde, wird unwiderruflich gelöscht, sobald es den Status „erledigt“ oder „gelöscht“ erhält, wobei spätestens um 00:00 Uhr eines jeden Kalendertages eine vollständige Bereinigung und Löschung aller verbliebenen Tickets aus der aktiven Datenbank erfolgt. Die verarbeiteten Daten fließen im Anschluss ausschließlich in eine anonymisierte Tagesstatistik ein, welche lediglich kumulierte Werte wie die Gesamtzahl der Tickets oder durchschnittliche Wartezeiten ohne jegliche Klarnamen oder rekonstruierbare Merkmale enthält. Technische Logfiles und Sicherheitsprotokolle werden automatisiert nach Ablauf einer Regelfrist von maximal 30 Tagen überschrieben, sofern keine systemkritischen Vorfälle eine längere Aufbewahrung zu Beweiszwecken rechtfertigen, während vertrags- und abrechnungsrelevante Daten der Geschäftskunden den gesetzlichen Aufbewahrungsfristen der Abgabenordnung (AO) und des Handelsgesetzbuches (HGB) unterliegen.",
+    ],
+  },
+  {
+    title: "Einsatz technischer Speichermedien im Browser (LocalStorage)",
+    content: [
+      "Die Anwendung verzichtet vollumfänglich auf den Einsatz von Drittanbieter-Cookies zu Werbe-, Tracking- oder Profilingzwecken. Zur Sicherstellung der essenziellen Funktionalitäten wird jedoch der lokale Speicher des Browsers (LocalStorage) gemäß den Bestimmungen des § 25 Abs. 2 Nr. 2 des Telekommunikation-Digitale-Dienste-Datenschutz-Gesetzes (TDDDG) beansprucht. Auf der Client-Seite der Endnutzer wird die spezifische Ticketnummer lokal abgelegt, um den Status auch bei einem unvorhergesehenen Seitenaufruf oder Verbindungsabbruch aufrechtzuerhalten, wobei dieser Eintrag gelöscht wird, sobald die Warteschlange final beendet wird. Im administrativen Bereich speichert das System ein temporäres Authentifizierungsmerkmal, um ein wiederholtes Einloggen bei jedem Seitenwechsel zu verhindern, was beim Betätigen des Logout-Buttons entfernt wird, während die Speicherung der visuellen Präferenz (Dark Mode oder Light Mode) der rein ergonomischen Darstellung dient.",
+    ],
+  },
+  {
+    title: "Einbindung externer Dienstleister, Hosting und Backend-Strukturen",
+    content: [
+      "Für den technischen Betrieb der Plattform bedient sich der Verantwortliche spezialisierter Infrastrukturdienstleister im Wege der Auftragsverarbeitung. Das Webhosting sowie die globale Bereitstellung der Applikationsdaten erfolgen über die Vercel Inc., 340 S Lemon Ave #4133, Walnut, CA 91789, USA [Link zu Vercel Privacy einfügen]. Die Bereitstellung der Cloud-Datenbank sowie der Backend-Dienste wird über die Supabase Inc., 970 Toa Payoh North #07-04, Singapur, abgewickelt, wobei das konkrete Datenbankprojekt in einer dedizierten europäischen Serverregion [z.B. EU-Zentral / Frankfurt] betrieben wird [Link zu Supabase Privacy einfügen]. Diese Dienstleister verarbeiten Daten streng weisungsgebunden und nur insoweit, als dies für die technische Infrastrukturbereitstellung zwingend geboten ist.",
+    ],
+  },
+  {
+    title: "Grenzüberschreitende Datenübermittlungen in Drittländer",
+    content: [
+      "Da die primären Technologie- und Cloud-Anbieter ihren gesellschaftsrechtlichen Hauptsitz in den USA oder anderen Staaten außerhalb des Geltungsbereichs der Europäischen Union haben, kann eine Übermittlung von Metadaten oder IP-basierten Routing-Informationen in sogenannte Drittstaaten nicht gänzlich ausgeschlossen werden. Um ein adäquates Datenschutzniveau zu garantieren, wurden mit den Anbietern die von der Europäischen Kommission erlassenen Standardvertragsklauseln (Standard Contractual Clauses – SCC) als rechtliche Garantie vereinbart, ergänzt durch die Zertifizierungen unter dem EU-US Data Privacy Framework, sofern die rechtlichen Voraussetzungen hierfür im Einzelfall vorliegen.",
+    ],
+  },
+  {
+    title: "Empfängerkategorien personenbezogener Daten",
+    content: [
+      "Eine Weitergabe von personenbezogenen Daten an unbefugte Dritte ist ausgeschlossen. Innerhalb der regulären Systemarchitektur werden Daten ausschließlich an dasjenige spezifische Unternehmen übermittelt, dessen Warteschlange der Nutzer aktiv in Anspruch nimmt, sowie an die im Abschnitt 9 detaillierten technischen Hosting-, Infrastruktur- und Datenbankdienstleister. Eine Offenlegung gegenüber staatlichen Stellen, Finanzbehörden oder Rechtsberatern erfolgt ausschließlich dann, wenn eine zwingende gesetzliche Verpflichtung oder eine vertragsrechtliche Notwendigkeit im Rahmen der B2B-Abrechnung dies erfordert.",
+    ],
+  },
+  {
+    title: "Technische und organisatorische Maßnahmen zur Datensicherheit",
+    content: [
+      "Der Betreiber implementiert komplexe technische und organisatorische Sicherheitsmaßnahmen gemäß Art. 32 DSGVO, um die verarbeiteten Daten vor zufälliger oder vorsätzlicher Manipulation, partiellem oder vollständigem Verlust, Zerstörung oder vor dem unbefugten Zugriff unberechtigter Dritter zu schützen. Zu diesen Schutzmechanismen zählen die standardisierte Verschlüsselung aller Datenströme mittels des HTTPS-Protokolls unter Verwendung aktueller TLS-Verschlüsselungsstandards, restriktive, rollenbasierte Zugriffskontrollen für die administrativen Dashboards sowie die konsequente, automatisierte Bereinigung aller flüchtigen Ticketdaten zum täglichen Mitternachtszeitpunkt.",
+    ],
+  },
+  {
+    title: "Besondere Bestimmungen für sensible Anwendungsbereiche",
+    content: [
+      "Es wird erneut deklariert, dass die Plattform KurzWarten nicht für die Verarbeitung hochsensibler Daten konzipiert ist. Institutionen aus dem medizinischen oder behördlichen Sektor, wie insbesondere Arztpraxen, Krankenhäuser oder Sozialämter, sind im Rahmen ihrer eigenen datenschutzrechtlichen Compliance verpflichtet, die Benennung von Räumen, Schaltern oder Behandlungsbereichen innerhalb des Systems vollkommen abstrakt und neutral zu gestalten (beispielsweise „Zimmer 104“ oder „Schalter C“), um jedweden Rückschluss auf den konkreten Zweck des Aufenthalts oder den Gesundheitszustand der wartenden Person systematisch zu unterbinden.",
+    ],
+  },
+  {
+    title: "Umfassende Belehrung über die Rechte betroffener Personen",
+    content: [
+      "Jeder betroffenen natürlichen Person stehen nach Maßgabe der gesetzlichen Bestimmungen der DSGVO weitreichende Rechte zu, die jederzeit gegenüber dem Verantwortlichen geltend gemacht werden können. Dies umfasst das Recht auf Auskunft nach Art. 15 DSGVO über die zu ihrer Person gespeicherten Daten nebst detaillierter Verarbeitungsinformationen, das Recht auf Berichtigung unrichtiger oder Vervollständigung unvollständiger Daten gemäß Art. 16 DSGVO, sowie das Recht auf Löschung („Recht auf Vergessenwerden“) gemäß Art. 17 DSGVO, sofern keine gesetzlichen Ausnahmetatbestände entgegenstehen. Des Weiteren existiert ein Recht auf Einschränkung der Verarbeitung nach Art. 18 DSGVO, ein Recht auf Datenübertragbarkeit in einem strukturierten, gängigen und maschinenlesbaren Format gemäß Art. 20 DSGVO sowie das fundamentale Recht auf Widerspruch gegen die Verarbeitung gemäß Art. 21 DSGVO, sofern die Verarbeitung auf der Grundlage berechtigter Interessen erfolgt. Sofern Daten im Auftrag eines Drittunternehmens im Rahmen einer Warteschlange verarbeitet werden, sind entsprechende Begehren primär an das jeweilige Unternehmen vor Ort zu richten.",
+    ],
+  },
+  {
+    title: "Beschwerderecht bei den zuständigen Aufsichtsbehörden",
+    content: [
+      "Unabhängig von anderweitigen verwaltungsrechtlichen oder gerichtlichen Rechtsbehelfen steht jeder betroffenen Person das Recht auf Einlegung einer Beschwerde bei einer zuständigen Datenschutz-Aufsichtsbehörde gemäß Art. 77 DSGVO zu, wenn die begründete Annahme vorliegt, dass die Verarbeitung der sie betreffenden personenbezogenen Daten gegen die Bestimmungen der DSGVO verstößt. Dieses Recht kann insbesondere bei der Aufsichtsbehörde des Mitgliedstaats des Aufenthaltsorts, des Arbeitsplatzes oder des Orts des mutmaßlichen Verstoßes sowie am Sitz des Verantwortlichen geltend gemacht werden.",
+    ],
+  },
+  {
+    title: "Ausschluss automatisierter Einzelfallentscheidungen und Profiling",
+    content: [
+      "Die Nutzung der Plattform erfordert und beinhaltet keine Verfahren zur automatisierten Entscheidungsfindung im Einzelfall einschließlich Profiling gemäß den Restriktionen des Art. 22 Abs. 1 und 4 DSGVO. Die im System integrierte mathematische Schätzung der voraussichtlichen Verweilzeit basiert auf rein algorithmischen Durchschnittswerten vorangegangener Ticketabwicklungen und entfaltet zu keinem Zeitpunkt eine rechtliche oder in ähnlicher Weise erhebliche Auswirkung auf die betroffene Person.",
+    ],
+  },
+  {
+    title: "Modifikationen und Aktualisierungen der Datenschutzerklärung",
+    content: [
+      "Der Verantwortliche behält sich das Recht vor, diese Datenschutzerklärung unter Beachtung der geltenden datenschutzrechtlichen Vorschriften jederzeit anzupassen oder zu aktualisieren, sofern dies aufgrund technischer Modifikationen der Anwendung, der Implementierung neuer Funktionalitäten, des Austauschs von Subdienstleistern oder veränderter gesetzlicher respektive höchstrichterlicher Vorgaben erforderlich werden sollte. Die jeweils aktuell gültige Fassung kann permanent und barrierefrei unter der spezifischen Webadresse [URL zur Datenschutzerklärung einfügen, z. B. https://mywait.de/datenschutz] abgerufen werden.",
+    ],
+  },
+];
+
 export default function DatenschutzPage() {
   return (
     <main className="bg-[#f5f7fb] text-slate-950">
-      <section className="mx-auto max-w-3xl px-5 py-12">
-        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-sm font-semibold text-blue-700">Datenschutz</p>
-          <h1 className="mt-2 text-4xl font-bold">
+      <section className="mx-auto max-w-4xl px-5 py-12">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-700">
+            Datenschutz
+          </p>
+          <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
             Datenschutzerklärung für KurzWarten
           </h1>
-          <p className="mt-4 rounded-lg bg-amber-50 p-4 font-semibold text-amber-900">
-            Diese Datenschutzerklärung informiert darüber, welche
-            personenbezogenen Daten bei der Nutzung von KurzWarten verarbeitet
-            werden. KurzWarten ist eine digitale Warteschlangen-Lösung, mit der
-            Unternehmen, Praxen, Dienstleister oder andere Stellen Tickets
-            erstellen, verwalten, aufrufen, erledigen und statistisch
-            auswerten können.
-          </p>
 
-          <div className="mt-8 space-y-8 leading-7 text-slate-700">
-            <section>
-              <h2 className="text-xl font-bold text-slate-950">
-                Verantwortlicher
-              </h2>
-              <p className="mt-3">
-                Verantwortlich für eigene Datenverarbeitungen im Zusammenhang
-                mit Betrieb, Bereitstellung und Verwaltung von KurzWarten ist:
-                <br />
-                [Name / Unternehmen]
-                <br />
-                [Adresse]
-                <br />
-                [E-Mail-Adresse]
-                <br />
-                [Telefonnummer]
-                <br />
-                [Website]
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-bold text-slate-950">
-                Rolle von KurzWarten bei Nutzung durch Unternehmen
-              </h2>
-              <p className="mt-3">
-                KurzWarten wird in der Regel von Unternehmen, Praxen,
-                Dienstleistern oder anderen Organisationen eingesetzt, um vor
-                Ort eine digitale Warteschlange zu verwalten.
-              </p>
-              <p className="mt-3">
-                Soweit ein solches Unternehmen KurzWarten für eigene Zwecke
-                einsetzt und darüber entscheidet, ob und welche Daten von
-                wartenden Personen erfasst werden, ist grundsätzlich dieses
-                Unternehmen für die Datenverarbeitung im Zusammenhang mit der
-                konkreten Warteschlange verantwortlich.
-              </p>
-              <p className="mt-3">
-                KurzWarten bzw. der Betreiber von KurzWarten verarbeitet diese
-                Daten in diesem Fall als technischer Dienstleister und
-                Auftragsverarbeiter im Auftrag des jeweiligen Unternehmens. Mit
-                Geschäftskunden wird hierfür vor dem produktiven Einsatz ein
-                Vertrag zur Auftragsverarbeitung (AVV) geschlossen.
-              </p>
-              <p className="mt-3">
-                Für eigene Datenverarbeitungen, insbesondere Betrieb der
-                Plattform, technische Sicherheit, Fehleranalyse,
-                Vertragskommunikation, Kundenverwaltung und Abrechnung, bleibt
-                der Betreiber von KurzWarten selbst verantwortlich.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-bold text-slate-950">
-                Welche Daten verarbeitet KurzWarten?
-              </h2>
-              <p className="mt-3">
-                Bei der Nutzung von KurzWarten können insbesondere folgende
-                Daten verarbeitet werden:
-              </p>
-              <ul className="mt-3 list-disc space-y-2 pl-6">
-                <li>Ticketnummer</li>
-                <li>
-                  Ticketstatus (z. B. wartend, aufgerufen, erledigt oder
-                  gelöscht)
-                </li>
-                <li>Zugehöriges Unternehmen oder zugehöriger Standort</li>
-                <li>Zugeordneter Mitarbeiter, Raum, Bereich oder Schalter</li>
-                <li>
-                  Erstellungszeitpunkt, Aufrufzeitpunkt, Erledigungszeitpunkt
-                  und Löschzeitpunkt
-                </li>
-                <li>Optional: Name oder Kürzel der wartenden Person</li>
-                <li>
-                  Technische Zugriffsdaten (z. B. IP-Adresse, Datum und Uhrzeit
-                  des Zugriffs, aufgerufene URL, Browsertyp, Betriebssystem,
-                  Referrer-URL und Fehlermeldungen)
-                </li>
-                <li>Im Adminbereich: Zugangsdaten oder Authentifizierungsinformationen</li>
-                <li>
-                  Lokale Browserdaten (LocalStorage), soweit sie für die Nutzung
-                  der App erforderlich sind
-                </li>
-              </ul>
-              <p className="mt-3">
-                Ein Name wird nur verarbeitet, wenn das jeweilige Unternehmen
-                diese Funktion nutzt und einen Namen zu einem Ticket einträgt
-                oder eintragen lässt. Der Name dient ausschließlich dazu, ein
-                Ticket vor Ort besser zuzuordnen.
-              </p>
-              <p className="mt-3">
-                KurzWarten ist nicht dafür vorgesehen, Diagnosen,
-                Behandlungsgründe, Gesundheitsdaten, besondere Kategorien
-                personenbezogener Daten oder sonstige sensible Informationen zu
-                erfassen. Nutzer und Geschäftskunden werden gebeten, solche
-                Informationen nicht in KurzWarten einzutragen.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-bold text-slate-950">
-                Zwecke der Verarbeitung
-              </h2>
-              <p className="mt-3">
-                Die Daten werden zu folgenden Zwecken verarbeitet:
-              </p>
-              <ul className="mt-3 list-disc space-y-2 pl-6">
-                <li>Erstellung und Verwaltung digitaler Warteschlangen</li>
-                <li>Anzeige von Ticketnummern und Wartepositionen</li>
-                <li>Schätzung und Anzeige von Wartezeiten</li>
-                <li>
-                  Aufruf, Bearbeitung, Erledigung und Löschung von Tickets im
-                  Adminbereich
-                </li>
-                <li>
-                  Zuordnung von Tickets zu Bereichen, Mitarbeitern, Räumen oder
-                  Schaltern
-                </li>
-                <li>Erstellung von anonymisierten Tagesstatistiken</li>
-                <li>
-                  Technische Bereitstellung und Absicherung der App (Stabilität,
-                  Fehleranalyse, Missbrauchsvermeidung)
-                </li>
-                <li>
-                  Kommunikation mit Geschäftskunden, Vertragsdurchführung und
-                  Abrechnung
-                </li>
-              </ul>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-bold text-slate-950">
-                Rechtsgrundlagen
-              </h2>
-              <p className="mt-3">
-                Die Verarbeitung personenbezogener Daten erfolgt auf folgenden
-                Rechtsgrundlagen:
-              </p>
-              <ul className="mt-3 list-disc space-y-2 pl-6">
-                <li>
-                  Die Verarbeitung von Ticketdaten zur Organisation der
-                  Warteschlange erfolgt regelmäßig auf Grundlage von Art. 6
-                  Abs. 1 lit. f DSGVO. Das berechtigte Interesse besteht darin,
-                  Warteprozesse effizient, nachvollziehbar und nutzerfreundlich
-                  zu organisieren.
-                </li>
-                <li>
-                  Soweit die Nutzung von KurzWarten zur Erfüllung oder
-                  Anbahnung eines Vertrags mit einem Geschäftskunden
-                  erforderlich ist, erfolgt die Verarbeitung auf Grundlage von
-                  Art. 6 Abs. 1 lit. b DSGVO.
-                </li>
-                <li>
-                  Soweit gesetzliche Aufbewahrungs- oder Nachweispflichten
-                  bestehen (z. B. bei der Abrechnung von Geschäftskunden),
-                  erfolgt die Verarbeitung auf Grundlage von Art. 6 Abs. 1 lit.
-                  c DSGVO.
-                </li>
-                <li>
-                  Technische Zugriffsdaten und Sicherheitsprotokolle werden auf
-                  Grundlage von Art. 6 Abs. 1 lit. f DSGVO verarbeitet. Das
-                  berechtigte Interesse besteht in der sicheren, stabilen und
-                  fehlerfreien Bereitstellung der App.
-                </li>
-              </ul>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-bold text-slate-950">
-                Speicherdauer und Löschung
-              </h2>
-              <p className="mt-3">Aktive Ticketdaten werden so kurz wie möglich gespeichert.</p>
-              <ul className="mt-3 list-disc space-y-2 pl-6">
-                <li>
-                  Tickets mit und ohne Namen werden gelöscht, sobald das Ticket
-                  aufgerufen und manuell oder automatisch als erledigt/gelöscht
-                  markiert wird. Spätestens um 00:00 Uhr des jeweiligen Tages
-                  werden alle Tickets des Tages vollständig aus der aktiven
-                  Systemdatenbank entfernt.
-                </li>
-                <li>
-                  Nach der Löschung werden die Daten in eine reine Tagesstatistik
-                  überführt. In dieser Tagesstatistik werden ausschließlich
-                  aggregierte und vollständig anonymisierte Zahlen gespeichert
-                  (z. B. Anzahl erstellter/erledigter Tickets, durchschnittliche
-                  Wartezeit). Ein Rückschluss auf konkrete Personen oder Namen
-                  ist in der Statistik nicht mehr möglich.
-                </li>
-                <li>
-                  Technische Logs und Sicherheitsprotokolle auf den Servern
-                  werden für eine Dauer von maximal 30 Tagen gespeichert, es sei
-                  denn, ein Sicherheitsvorfall macht eine längere Aufbewahrung
-                  zur Aufklärung erforderlich.
-                </li>
-              </ul>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-bold text-slate-950">
-                Cookies und lokale Speicherung im Browser
-              </h2>
-              <p className="mt-3">
-                KurzWarten setzt keine Cookies für Werbung, Tracking oder
-                Analysezwecke ein.
-              </p>
-              <p className="mt-3">
-                Zur Gewährleistung der Kernfunktionen nutzt die App die lokale
-                Speicherung im Browser (LocalStorage) gemäß § 25 Abs. 2 Nr. 2
-                TDDDG:
-              </p>
-              <ul className="mt-3 list-disc space-y-2 pl-6">
-                <li>
-                  Kundenseite: Die Ticketnummer wird lokal gespeichert, damit
-                  das Ticket nach einem Neuladen der Seite oder bei kurzzeitigem
-                  Verbindungsverlust wieder angezeigt werden kann. Diese
-                  Speicherung wird automatisch entfernt, wenn das Ticket
-                  abgeschlossen, gelöscht oder die Warteschlange manuell
-                  verlassen wird.
-                </li>
-                <li>
-                  Adminbereich: Hier wird die Sitzung lokal gespeichert, damit
-                  eine Anmeldung beim Neuladen der Seite bestehen bleibt. Diese
-                  Speicherung wird beim Abmelden (Logout) entfernt.
-                </li>
-                <li>
-                  Darstellung: Die gewählte Darstellung (Heller oder Dunkler
-                  Modus) wird lokal gespeichert, um das Design bei einem
-                  erneuten Aufruf beizubehalten.
-                </li>
-              </ul>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-bold text-slate-950">
-                Hosting, Datenbank und technische Dienstleister
-              </h2>
-              <p className="mt-3">
-                KurzWarten wird über spezialisierte externe Cloud-Dienstleister
-                betrieben, mit denen entsprechende Verträge zur
-                Auftragsverarbeitung (AVV) geschlossen wurden.
-              </p>
-              <p className="mt-3 font-semibold text-slate-950">
-                Hosting und Bereitstellung der App:
-              </p>
-              <p className="mt-1">
-                Vercel Inc., 340 S Lemon Ave #4133, Walnut, CA 91789, USA
-              </p>
-              <p className="mt-2">
-                Datenschutzhinweise: [Link zu Vercel Privacy einfügen]
-              </p>
-              <p className="mt-4 font-semibold text-slate-950">
-                Datenbank und Backend-Dienste:
-              </p>
-              <p className="mt-1">
-                Supabase Inc., 970 Toa Payoh North #07-04, Singapur (bzw.
-                entsprechende EU-Niederlassung/Instanz)
-              </p>
-              <p className="mt-2">
-                Region des Datenbankprojekts: [z.B. EU-Zentral / Frankfurt]
-              </p>
-              <p className="mt-2">
-                Datenschutzhinweise: [Link zu Supabase Privacy einfügen]
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-bold text-slate-950">
-                Drittlandübermittlungen
-              </h2>
-              <p className="mt-3">
-                Da die eingesetzten Infrastruktur-Dienstleister (Vercel,
-                Supabase) ihren Hauptsitz in den USA bzw. außerhalb der EU
-                haben, kann nicht ausgeschlossen werden, dass im Rahmen von
-                Wartung, Routing oder Support Daten in ein Drittland übermittelt
-                werden.
-              </p>
-              <p className="mt-3">
-                Diese Übermittlung wird über die von der EU-Kommission
-                genehmigten Standardvertragsklauseln (Standard Contractual
-                Clauses – SCC) sowie, sofern anwendbar, über das EU-US Data
-                Privacy Framework abgesichert, um ein angemessenes
-                Datenschutzniveau zu garantieren.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-bold text-slate-950">
-                Empfänger personenbezogener Daten
-              </h2>
-              <p className="mt-3">
-                Personenbezogene Daten werden nur an folgende Empfänger
-                weitergegeben:
-              </p>
-              <ul className="mt-3 list-disc space-y-2 pl-6">
-                <li>
-                  Das jeweilige Unternehmen oder die Organisation, die
-                  KurzWarten für die eigene Warteschlange nutzt (gilt für die
-                  dort eingegebenen Ticket- und Namensdaten).
-                </li>
-                <li>
-                  Die in Ziffer 8 genannten technischen Hosting- und
-                  Datenbankdienstleister.
-                </li>
-                <li>
-                  Steuerberater, Finanzbehörden oder Gerichte, soweit dies zur
-                  Abwicklung von kostenpflichtigen Verträgen mit
-                  Geschäftskunden gesetzlich zwingend erforderlich ist.
-                </li>
-              </ul>
-              <p className="mt-3">
-                Eine Weitergabe oder ein Verkauf von Daten zu Werbefunktionen
-                oder Trackingzwecken findet nicht statt.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-bold text-slate-950">
-                Datensicherheit
-              </h2>
-              <p className="mt-3">
-                KurzWarten setzt moderne technische und organisatorische
-                Maßnahmen (TOM) ein, um Ihre Daten vor Verlust und unbefugtem
-                Zugriff zu schützen. Dazu gehören:
-              </p>
-              <ul className="mt-3 list-disc space-y-2 pl-6">
-                <li>Eine durchgehend verschlüsselte Übertragung per HTTPS / TLS.</li>
-                <li>
-                  Strenge Passwort- und Zugriffsbeschränkungen für
-                  administrative Bereiche.
-                </li>
-                <li>
-                  Die konsequente automatische Löschung aller Ticketdaten um
-                  Mitternacht.
-                </li>
-              </ul>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-bold text-slate-950">
-                Keine Pflicht zur Namensangabe und sensible Bereiche
-              </h2>
-              <p className="mt-3">
-                Die Nutzung von KurzWarten ist ohne Angabe des echten Namens
-                möglich. Sofern ein Unternehmen ein Namensfeld aktiviert, wird
-                empfohlen, nur Vornamen, Kürzel oder Nummern einzutragen.
-              </p>
-              <p className="mt-3">
-                Wichtiger Hinweis für Arztpraxen und sensible Bereiche:
-                KurzWarten ist nicht für die Verarbeitung von Patientendaten,
-                Diagnosen oder sonstigen Gesundheitsdaten nach Art. 9 DSGVO
-                konzipiert. Arztpraxen sind verpflichtet, Bereiche oder Aufrufe
-                vollkommen neutral (z. B. „Raum 1“, „Schalter B“) zu benennen.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-bold text-slate-950">
-                Rechte betroffener Personen
-              </h2>
-              <p className="mt-3">
-                Sie haben im Rahmen der gesetzlichen Vorgaben der DSGVO folgende
-                Rechte bezüglich Ihrer Daten:
-              </p>
-              <ul className="mt-3 list-disc space-y-2 pl-6">
-                <li>Recht auf Auskunft (Art. 15 DSGVO)</li>
-                <li>Recht auf Berichtigung (Art. 16 DSGVO)</li>
-                <li>Recht auf Löschung (Art. 17 DSGVO)</li>
-                <li>
-                  Recht auf Einschränkung der Verarbeitung (Art. 18 DSGVO)
-                </li>
-                <li>Recht auf Datenübertragbarkeit (Art. 20 DSGVO)</li>
-                <li>Recht auf Widerspruch (Art. 21 DSGVO)</li>
-              </ul>
-              <p className="mt-3">
-                Möchten Sie diese Rechte bezüglich einer konkreten Warteschlange
-                vor Ort (z. B. in einer Arztpraxis) geltend machen, wenden Sie
-                sich bitte direkt an das jeweilige Unternehmen, da dieses der
-                datenschutzrechtlich Verantwortliche für die Warteschlange ist.
-                Für Fragen bezüglich der Plattform KurzWarten selbst können Sie
-                sich an den in Ziffer 1 genannten Verantwortlichen wenden.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-bold text-slate-950">
-                Beschwerderecht bei einer Aufsichtsbehörde
-              </h2>
-              <p className="mt-3">
-                Sie haben das Recht, sich bei einer Datenschutzaufsichtsbehörde
-                zu beschweren, wenn Sie der Ansicht sind, dass die Verarbeitung
-                Ihrer personenbezogenen Daten gegen die DSGVO verstößt.
-                Zuständig ist in der Regel die Aufsichtsbehörde des Bundeslandes,
-                in dem der in Ziffer 1 genannte Verantwortliche seinen Sitz hat.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-bold text-slate-950">
-                Automatisierte Entscheidungen und Profiling
-              </h2>
-              <p className="mt-3">
-                Eine automatisierte Entscheidungsfindung einschließlich Profiling
-                im Sinne von Art. 22 DSGVO findet nicht statt. Die technische
-                Schätzung von Wartezeiten dient lediglich der organisatorischen
-                Anzeige und entfaltet keine rechtliche Wirkung gegenüber
-                Nutzern.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-bold text-slate-950">
-                Änderungen dieser Datenschutzerklärung
-              </h2>
-              <p className="mt-3">
-                Diese Datenschutzerklärung kann angepasst werden, wenn sich
-                technische Funktionen oder rechtliche Vorgaben ändern. Die
-                jeweils aktuelle Version ist permanent unter [URL zur
-                Datenschutzerklärung einfügen, z. B.
-                https://mywait.de/datenschutz] abrufbar.
-              </p>
-            </section>
+          <div className="mt-10 space-y-10 leading-7 text-slate-700">
+            {sections.map((section, index) => (
+              <section key={section.title}>
+                <h2 className="text-xl font-bold text-slate-950">
+                  {index + 1}. {section.title}
+                </h2>
+                <div className="mt-3 space-y-4">
+                  {section.content.map((paragraph) => (
+                    <p key={paragraph}>{paragraph}</p>
+                  ))}
+                </div>
+              </section>
+            ))}
           </div>
         </div>
       </section>
