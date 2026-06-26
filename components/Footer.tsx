@@ -17,7 +17,10 @@ export default function Footer() {
           <Link href="/datenschutz" className="hover:text-slate-950">
             Datenschutz
           </Link>
-          <Link href="/nutzungsbedingungen" className="hover:text-slate-950">
+          <Link
+            href="/nutzungsbedingungen/geschaeftskunden"
+            className="hover:text-slate-950"
+          >
             Nutzungsbedingungen
           </Link>
           <Link href="/barrierefreiheit" className="hover:text-slate-950">
