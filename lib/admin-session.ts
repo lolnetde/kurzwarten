@@ -1,36 +1,41 @@
-const STORAGE_PREFIX = "kurzwarten-admin-session";
+const LEGACY_STORAGE_PREFIX = "kurzwarten-admin-session";
 
-function getStorageKey(slug: string) {
-  return `${STORAGE_PREFIX}-${slug}`;
+function getLegacyStorageKey(slug: string) {
+  return `${LEGACY_STORAGE_PREFIX}-${slug}`;
 }
 
-export function getSavedAdminPassword(slug: string) {
-  if (typeof window === "undefined") return "";
+function clearLegacyAdminPassword(slug: string) {
+  if (typeof window === "undefined") return;
+
+  window.localStorage.removeItem(getLegacyStorageKey(slug));
+}
+
+export async function getCurrentAdminSession(slug: string) {
+  clearLegacyAdminPassword(slug);
+
+  const response = await fetch("/api/company-admin-session", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ slug }),
+  });
+
+  return response.json();
+}
+
+export async function logoutAdminSession(slug: string) {
+  clearLegacyAdminPassword(slug);
 
   try {
-    const savedSession = window.localStorage.getItem(getStorageKey(slug));
-    if (!savedSession) return "";
-
-    const parsedSession = JSON.parse(savedSession) as { password?: unknown };
-    return typeof parsedSession.password === "string"
-      ? parsedSession.password
-      : "";
+    await fetch("/api/company-admin-logout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ slug }),
+    });
   } catch {
-    return "";
+    // The local UI still logs out even if the network request fails.
   }
-}
-
-export function saveAdminPassword(slug: string, password: string) {
-  if (typeof window === "undefined") return;
-
-  window.localStorage.setItem(
-    getStorageKey(slug),
-    JSON.stringify({ password, savedAt: Date.now() })
-  );
-}
-
-export function clearAdminPassword(slug: string) {
-  if (typeof window === "undefined") return;
-
-  window.localStorage.removeItem(getStorageKey(slug));
 }

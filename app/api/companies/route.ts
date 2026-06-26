@@ -1,6 +1,12 @@
 import { createSlug } from "@/lib/slug";
-import { supabase } from "@/lib/supabase";
+import { hashAdminPassword } from "@/lib/admin-auth";
 import { normalizeCompanyEnvironment } from "@/lib/company-environments";
+import {
+  checkRateLimit,
+  getClientIdentifier,
+  rateLimitResponse,
+} from "@/lib/rate-limit";
+import { supabaseServer } from "@/lib/supabase-server";
 import { NextResponse } from "next/server";
 
 const MAX_COMPANY_NAME_LENGTH = 80;
@@ -60,6 +66,16 @@ export async function POST(request: Request) {
     );
   }
 
+  const rateLimit = checkRateLimit(
+    `company-create:${getClientIdentifier(request)}`,
+    5,
+    60 * 60 * 1000
+  );
+
+  if (!rateLimit.allowed) {
+    return rateLimitResponse(rateLimit.retryAfterSeconds);
+  }
+
   const slug = createSlug(name);
 
   if (!slug) {
@@ -69,7 +85,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { data: existingCompany } = await supabase
+  const { data: existingCompany } = await supabaseServer
     .from("companies")
     .select("id")
     .eq("slug", slug)
@@ -85,9 +101,16 @@ export async function POST(request: Request) {
     );
   }
 
-  const { data, error } = await supabase
+  const hashedPassword = await hashAdminPassword(password);
+
+  const { data, error } = await supabaseServer
     .from("companies")
-    .insert({ name, slug, admin_password: password, environment_type: environmentType })
+    .insert({
+      name,
+      slug,
+      admin_password: hashedPassword,
+      environment_type: environmentType,
+    })
     .select("id, name, slug, address, postal_code, city, environment_type")
     .single();
 

@@ -1,3 +1,4 @@
+import { requireAdminSession } from "@/lib/admin-auth";
 import { supabaseServer } from "@/lib/supabase-server";
 import { getCurrentTicketDay } from "@/lib/ticket-day";
 import { NextResponse } from "next/server";
@@ -26,12 +27,18 @@ type RouteParams = {
   }>;
 };
 
-export async function GET(_request: Request, { params }: RouteParams) {
+export async function GET(request: Request, { params }: RouteParams) {
   const { slug } = await params;
+  const auth = await requireAdminSession(request, slug);
+
+  if (!auth.ok) {
+    return auth.response;
+  }
 
   let { data: companyData, error: companyError } = await supabaseServer
     .from("companies")
     .select("id, name, slug, address, postal_code, city, environment_type")
+    .eq("id", auth.session.companyId)
     .eq("slug", slug)
     .limit(1)
     .maybeSingle();
@@ -40,6 +47,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
     const fallbackResult = await supabaseServer
       .from("companies")
       .select("id, name, slug, address, postal_code, city")
+      .eq("id", auth.session.companyId)
       .eq("slug", slug)
       .limit(1)
       .maybeSingle();

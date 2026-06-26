@@ -1,3 +1,4 @@
+import { requireAdminSession } from "@/lib/admin-auth";
 import { supabaseServer } from "@/lib/supabase-server";
 import { NextResponse } from "next/server";
 
@@ -33,9 +34,16 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     );
   }
 
+  const auth = await requireAdminSession(request, slug);
+
+  if (!auth.ok) {
+    return auth.response;
+  }
+
   const { data: companyData, error: companyError } = await supabaseServer
     .from("companies")
     .select("id")
+    .eq("id", auth.session.companyId)
     .eq("slug", slug)
     .limit(1)
     .maybeSingle();

@@ -1,0 +1,15 @@
+
+> kurzwarten@0.1.0 dev
+> next dev -p 3000
+
+▲ Next.js 16.2.9 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.178.54:3000
+- Environments: .env.local
+✓ Ready in 573ms
+Creating turbopack project { dir: 'C:\\Users\\jonas\\warteapp', testMode: true }
+
+ GET /api/tickets 410 in 205ms (next.js: 181ms, application-code: 24ms)
+ GET /api/company/test/tickets 401 in 811ms (next.js: 795ms, application-code: 16ms)
+ GET / 307 in 482ms (next.js: 115ms, application-code: 368ms)
+ GET /home 200 in 96ms (next.js: 31ms, application-code: 65ms)

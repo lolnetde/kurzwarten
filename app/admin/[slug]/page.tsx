@@ -2,9 +2,8 @@
 
 import QRCode from "qrcode";
 import {
-  clearAdminPassword,
-  getSavedAdminPassword,
-  saveAdminPassword,
+  getCurrentAdminSession,
+  logoutAdminSession,
 } from "@/lib/admin-session";
 import { ButtonSpinner, PanelSkeleton, TicketListSkeleton } from "@/components/LoadingStates";
 import { getCompanyEnvironmentCopy } from "@/lib/company-environments";
@@ -362,27 +361,14 @@ export default function CompanyAdminPage() {
         if (data.success) {
           setCompany(data.company);
 
-          const savedPassword = getSavedAdminPassword(slug);
+          setIsUnlocking(true);
 
-          if (savedPassword) {
-            setIsUnlocking(true);
+          const sessionData = await getCurrentAdminSession(slug);
 
-            const loginResponse = await fetch("/api/company-admin-login", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ slug, password: savedPassword }),
-            });
-            const loginData = await loginResponse.json();
-
-            if (loginData.success) {
-              setCompany(loginData.company);
-              setIsUnlocked(true);
-              await Promise.all([loadTickets(), loadDoctors()]);
-            } else {
-              clearAdminPassword(slug);
-            }
+          if (sessionData.success) {
+            setCompany(sessionData.company);
+            setIsUnlocked(true);
+            await Promise.all([loadTickets(), loadDoctors()]);
           }
         } else {
           setMessage(data.error ?? "Unternehmen wurde nicht gefunden.");
@@ -427,7 +413,6 @@ export default function CompanyAdminPage() {
 
       if (data.success) {
         setIsUnlocked(true);
-        saveAdminPassword(slug, password.trim());
         setPassword("");
         await Promise.all([loadTickets(), loadDoctors()]);
       } else {
@@ -440,8 +425,8 @@ export default function CompanyAdminPage() {
     }
   }
 
-  function logoutAdmin() {
-    clearAdminPassword(slug);
+  async function logoutAdmin() {
+    await logoutAdminSession(slug);
     setIsUnlocked(false);
     setPassword("");
     setTickets([]);

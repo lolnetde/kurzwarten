@@ -164,8 +164,9 @@ const enduserSections: Section[] = [
   {
     title: "Umgang mit Ticketdaten",
     content: [
-      "Wartende Personen sollten ihre Ticketnummer sorgfältig aufbewahren und nicht unnötig an andere Personen weitergeben.",
-      "Wenn KurzWarten eine Funktion zur Eingabe eines Namens anbietet, sollte nur die für die Zuordnung erforderliche Angabe gemacht werden. Die Eingabe sensibler Informationen, insbesondere Diagnosen, Beschwerden, Behandlungsgründe oder andere vertrauliche Angaben, ist zu vermeiden.",
+      "Wartende Personen sehen in KurzWarten grundsätzlich nur ihre Ticketnummer und den dazugehörigen Ticketstatus.",
+      "Die Ticketnummer sollte sorgfältig aufbewahrt und nicht unnötig an andere Personen weitergegeben werden, da sie zur Anzeige des jeweiligen Tickets verwendet werden kann.",
+      "Wartende Personen können über KurzWarten keine Namen oder sonstigen personenbezogenen Zusatzangaben eingeben. Falls Angaben geändert, korrigiert oder gelöscht werden sollen, sollten sich wartende Personen an das Personal des jeweiligen Unternehmens oder der jeweiligen Einrichtung wenden.",
     ],
   },
   {

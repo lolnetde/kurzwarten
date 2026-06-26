@@ -1,3 +1,4 @@
+import { requireAdminSession } from "@/lib/admin-auth";
 import { hasSupabaseServerKey, supabaseServer } from "@/lib/supabase-server";
 import { normalizeCompanyEnvironment } from "@/lib/company-environments";
 import {
@@ -14,13 +15,11 @@ type RouteParams = {
 
 type CompanyRow = {
   id: string;
-  admin_password: string;
 };
 
 export async function PATCH(request: Request, { params }: RouteParams) {
   const { slug } = await params;
   let body: {
-    password?: unknown;
     address?: unknown;
     postal_code?: unknown;
     city?: unknown;
@@ -37,7 +36,6 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     );
   }
 
-  const password = typeof body.password === "string" ? body.password.trim() : "";
   const address = typeof body.address === "string" ? body.address.trim() : "";
   const postalCode =
     typeof body.postal_code === "string" ? body.postal_code.trim() : "";
@@ -50,11 +48,10 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     waitTimeDisclaimer || DEFAULT_WAIT_TIME_DISCLAIMER;
   const environmentType = normalizeCompanyEnvironment(body.environment_type);
 
-  if (!password) {
-    return NextResponse.json(
-      { success: false, error: "Bitte gib das Admin-Passwort ein." },
-      { status: 400 }
-    );
+  const auth = await requireAdminSession(request, slug);
+
+  if (!auth.ok) {
+    return auth.response;
   }
 
   if (normalizedWaitTimeDisclaimer.length > MAX_WAIT_TIME_DISCLAIMER_LENGTH) {
@@ -69,7 +66,8 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
   const { data: companyData, error: companyError } = await supabaseServer
     .from("companies")
-    .select("id, admin_password")
+    .select("id")
+    .eq("id", auth.session.companyId)
     .eq("slug", slug)
     .maybeSingle();
 
@@ -86,13 +84,6 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     return NextResponse.json(
       { success: false, error: "Unternehmen wurde nicht gefunden." },
       { status: 404 }
-    );
-  }
-
-  if (currentCompany.admin_password !== password) {
-    return NextResponse.json(
-      { success: false, error: "Admin-Passwort ist falsch." },
-      { status: 401 }
     );
   }
 

@@ -1,3 +1,4 @@
+import { requireAdminSession } from "@/lib/admin-auth";
 import { supabaseServer } from "@/lib/supabase-server";
 import { NextResponse } from "next/server";
 
@@ -9,7 +10,6 @@ type RouteParams = {
 
 type CompanyRow = {
   id: string;
-  admin_password: string;
 };
 
 type DoctorInput = {
@@ -23,32 +23,49 @@ const MAX_DOCTORS = 20;
 const MAX_DOCTOR_NAME_LENGTH = 80;
 const MAX_TREATMENT_MINUTES = 240;
 
-async function getCompany(slug: string) {
+async function getAuthorizedCompany(request: Request, slug: string) {
+  const auth = await requireAdminSession(request, slug);
+
+  if (!auth.ok) {
+    return { company: null, response: auth.response };
+  }
+
   const { data, error } = await supabaseServer
     .from("companies")
-    .select("id, admin_password")
+    .select("id")
+    .eq("id", auth.session.companyId)
     .eq("slug", slug)
     .maybeSingle();
 
-  return { company: data as CompanyRow | null, error };
-}
-
-export async function GET(_request: Request, { params }: RouteParams) {
-  const { slug } = await params;
-  const { company, error: companyError } = await getCompany(slug);
-
-  if (companyError) {
-    return NextResponse.json(
-      { success: false, error: companyError.message },
-      { status: 500 }
-    );
+  if (error) {
+    return {
+      company: null,
+      response: NextResponse.json(
+        { success: false, error: error.message },
+        { status: 500 }
+      ),
+    };
   }
 
-  if (!company) {
-    return NextResponse.json(
-      { success: false, error: "Unternehmen wurde nicht gefunden." },
-      { status: 404 }
-    );
+  if (!data) {
+    return {
+      company: null,
+      response: NextResponse.json(
+        { success: false, error: "Unternehmen wurde nicht gefunden." },
+        { status: 404 }
+      ),
+    };
+  }
+
+  return { company: data as CompanyRow, response: null };
+}
+
+export async function GET(request: Request, { params }: RouteParams) {
+  const { slug } = await params;
+  const { company, response } = await getAuthorizedCompany(request, slug);
+
+  if (response) {
+    return response;
   }
 
   const { data: doctors, error } = await supabaseServer
@@ -70,22 +87,13 @@ export async function GET(_request: Request, { params }: RouteParams) {
 
 export async function PUT(request: Request, { params }: RouteParams) {
   const { slug } = await params;
-  let body: { password?: unknown; doctors?: unknown };
+  let body: { doctors?: unknown };
 
   try {
     body = await request.json();
   } catch {
     return NextResponse.json(
       { success: false, error: "Ungueltige Anfrage" },
-      { status: 400 }
-    );
-  }
-
-  const password = typeof body.password === "string" ? body.password.trim() : "";
-
-  if (!password) {
-    return NextResponse.json(
-      { success: false, error: "Bitte gib das Admin-Passwort ein." },
       { status: 400 }
     );
   }
@@ -107,27 +115,10 @@ export async function PUT(request: Request, { params }: RouteParams) {
     );
   }
 
-  const { company, error: companyError } = await getCompany(slug);
+  const { company, response } = await getAuthorizedCompany(request, slug);
 
-  if (companyError) {
-    return NextResponse.json(
-      { success: false, error: companyError.message },
-      { status: 500 }
-    );
-  }
-
-  if (!company) {
-    return NextResponse.json(
-      { success: false, error: "Unternehmen wurde nicht gefunden." },
-      { status: 404 }
-    );
-  }
-
-  if (company.admin_password !== password) {
-    return NextResponse.json(
-      { success: false, error: "Admin-Passwort ist falsch." },
-      { status: 401 }
-    );
+  if (response) {
+    return response;
   }
 
   const cleanedDoctors = (body.doctors as DoctorInput[])

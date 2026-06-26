@@ -1,10 +1,10 @@
+import { requireAdminSession } from "@/lib/admin-auth";
 import { supabaseServer } from "@/lib/supabase-server";
 import { getCurrentTicketDay } from "@/lib/ticket-day";
 import { NextResponse } from "next/server";
 
 type CompanyRow = {
   id: string;
-  admin_password: string;
 };
 
 type TicketHistoryRow = {
@@ -125,29 +125,17 @@ async function archiveOldTickets(companyId: string, today: string) {
 
 export async function POST(request: Request, { params }: RouteParams) {
   const { slug } = await params;
-  let body: { password?: unknown };
 
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json(
-      { success: false, error: "Ungueltige Anfrage" },
-      { status: 400 }
-    );
-  }
+  const auth = await requireAdminSession(request, slug);
 
-  const password = typeof body.password === "string" ? body.password.trim() : "";
-
-  if (!password) {
-    return NextResponse.json(
-      { success: false, error: "Bitte gib das Admin-Passwort ein." },
-      { status: 400 }
-    );
+  if (!auth.ok) {
+    return auth.response;
   }
 
   const { data: companyData, error: companyError } = await supabaseServer
     .from("companies")
-    .select("id, admin_password")
+    .select("id")
+    .eq("id", auth.session.companyId)
     .eq("slug", slug)
     .maybeSingle();
 
@@ -164,13 +152,6 @@ export async function POST(request: Request, { params }: RouteParams) {
     return NextResponse.json(
       { success: false, error: "Unternehmen wurde nicht gefunden." },
       { status: 404 }
-    );
-  }
-
-  if (company.admin_password !== password) {
-    return NextResponse.json(
-      { success: false, error: "Admin-Passwort ist falsch." },
-      { status: 401 }
     );
   }
 

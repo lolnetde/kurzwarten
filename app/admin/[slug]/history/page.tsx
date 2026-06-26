@@ -1,9 +1,8 @@
 "use client";
 
 import {
-  clearAdminPassword,
-  getSavedAdminPassword,
-  saveAdminPassword,
+  getCurrentAdminSession,
+  logoutAdminSession,
 } from "@/lib/admin-session";
 import { ButtonSpinner, HistorySkeleton, PanelSkeleton } from "@/components/LoadingStates";
 import { useCallback, useEffect, useState } from "react";
@@ -53,7 +52,7 @@ export default function CompanyHistoryPage() {
   );
 
   const loadHistory = useCallback(
-    async (adminPassword: string) => {
+    async () => {
       setIsLoadingHistory(true);
 
       try {
@@ -62,7 +61,7 @@ export default function CompanyHistoryPage() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ password: adminPassword }),
+          body: JSON.stringify({}),
         });
         const data = await response.json();
 
@@ -90,28 +89,15 @@ export default function CompanyHistoryPage() {
         if (data.success) {
           setCompany(data.company);
 
-          const savedPassword = getSavedAdminPassword(slug);
+          setIsUnlocking(true);
 
-          if (savedPassword) {
-            setIsUnlocking(true);
+          const sessionData = await getCurrentAdminSession(slug);
 
-            const loginResponse = await fetch("/api/company-admin-login", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ slug, password: savedPassword }),
-            });
-            const loginData = await loginResponse.json();
-
-            if (loginData.success) {
-              setCompany(loginData.company);
-              setPassword(savedPassword);
-              setIsUnlocked(true);
-              await loadHistory(savedPassword);
-            } else {
-              clearAdminPassword(slug);
-            }
+          if (sessionData.success) {
+            setCompany(sessionData.company);
+            setPassword("");
+            setIsUnlocked(true);
+            await loadHistory();
           }
         } else {
           setMessage(data.error ?? "Unternehmen wurde nicht gefunden.");
@@ -150,10 +136,9 @@ export default function CompanyHistoryPage() {
 
       if (data.success) {
         setCompany(data.company);
-        saveAdminPassword(slug, password.trim());
-        setPassword(password.trim());
+        setPassword("");
         setIsUnlocked(true);
-        await loadHistory(password.trim());
+        await loadHistory();
       } else {
         setMessage(data.error ?? "Login fehlgeschlagen.");
       }
@@ -164,8 +149,8 @@ export default function CompanyHistoryPage() {
     }
   }
 
-  function logoutAdmin() {
-    clearAdminPassword(slug);
+  async function logoutAdmin() {
+    await logoutAdminSession(slug);
     setIsUnlocked(false);
     setPassword("");
     setHistory([]);
@@ -283,7 +268,7 @@ export default function CompanyHistoryPage() {
               Dashboard
             </a>
             <button
-              onClick={() => loadHistory(password)}
+              onClick={() => loadHistory()}
               disabled={isLoadingHistory}
               className="rounded-lg bg-blue-700 px-4 py-3 font-semibold text-white hover:bg-blue-800"
             >

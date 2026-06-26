@@ -1,4 +1,14 @@
-import { supabase } from "@/lib/supabase";
+import {
+  createAdminSession,
+  hashAdminPassword,
+  verifyAdminPassword,
+} from "@/lib/admin-auth";
+import {
+  checkRateLimit,
+  getClientIdentifier,
+  rateLimitResponse,
+} from "@/lib/rate-limit";
+import { supabaseServer } from "@/lib/supabase-server";
 import { NextResponse } from "next/server";
 
 function isMissingCompanyProfileError(error: { message?: string } | null) {
@@ -45,7 +55,17 @@ export async function POST(request: Request) {
     );
   }
 
-  let { data, error } = await supabase
+  const rateLimit = checkRateLimit(
+    `admin-login:${getClientIdentifier(request)}:${slug}`,
+    8,
+    15 * 60 * 1000
+  );
+
+  if (!rateLimit.allowed) {
+    return rateLimitResponse(rateLimit.retryAfterSeconds);
+  }
+
+  let { data, error } = await supabaseServer
     .from("companies")
     .select(
       "id, name, slug, address, postal_code, city, wait_time_disclaimer, environment_type, admin_password"
@@ -55,7 +75,7 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   if (isMissingCompanyProfileError(error)) {
-    const fallbackResult = await supabase
+    const fallbackResult = await supabaseServer
       .from("companies")
       .select("id, name, slug, address, postal_code, city, admin_password")
       .eq("slug", slug)
@@ -81,10 +101,40 @@ export async function POST(request: Request) {
     );
   }
 
-  if (company.admin_password !== password) {
+  const passwordResult = await verifyAdminPassword(
+    password,
+    company.admin_password
+  );
+
+  if (!passwordResult.ok) {
     return NextResponse.json(
       { success: false, error: "Passwort ist falsch" },
       { status: 401 }
+    );
+  }
+
+  if (passwordResult.needsRehash) {
+    const hashedPassword = await hashAdminPassword(password);
+
+    await supabaseServer
+      .from("companies")
+      .update({ admin_password: hashedPassword })
+      .eq("id", company.id);
+  }
+
+  const sessionCreated = await createAdminSession({
+    id: company.id,
+    slug: company.slug,
+  });
+
+  if (!sessionCreated) {
+    return NextResponse.json(
+      {
+        success: false,
+        error:
+          "Server-Session konnte nicht erstellt werden. Bitte ADMIN_SESSION_SECRET setzen.",
+      },
+      { status: 500 }
     );
   }
 

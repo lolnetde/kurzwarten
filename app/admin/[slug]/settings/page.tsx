@@ -1,9 +1,8 @@
 "use client";
 
 import {
-  clearAdminPassword,
-  getSavedAdminPassword,
-  saveAdminPassword,
+  getCurrentAdminSession,
+  logoutAdminSession,
 } from "@/lib/admin-session";
 import { ButtonSpinner, PanelSkeleton } from "@/components/LoadingStates";
 import {
@@ -137,38 +136,25 @@ export default function CompanySettingsPage() {
           setMessage(data.error ?? "Einrichtung wurde nicht gefunden.");
         }
 
-        const savedPassword = getSavedAdminPassword(slug);
+        setIsUnlocking(true);
 
-        if (savedPassword) {
-          setIsUnlocking(true);
+        const sessionData = await getCurrentAdminSession(slug);
 
-          const loginResponse = await fetch("/api/company-admin-login", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ slug, password: savedPassword }),
-          });
-          const loginData = await loginResponse.json();
-
-          if (loginData.success) {
-            setCompany(loginData.company);
-            setAddress(loginData.company.address ?? "");
-            setPostalCode(loginData.company.postal_code ?? "");
-            setCity(loginData.company.city ?? "");
-            setWaitTimeDisclaimer(
-              loginData.company.wait_time_disclaimer ??
-                DEFAULT_WAIT_TIME_DISCLAIMER
-            );
-            setEnvironmentType(
-              normalizeCompanyEnvironment(loginData.company.environment_type)
-            );
-            setPassword(savedPassword);
-            setIsUnlocked(true);
-            await loadDoctors();
-          } else {
-            clearAdminPassword(slug);
-          }
+        if (sessionData.success) {
+          setCompany(sessionData.company);
+          setAddress(sessionData.company.address ?? "");
+          setPostalCode(sessionData.company.postal_code ?? "");
+          setCity(sessionData.company.city ?? "");
+          setWaitTimeDisclaimer(
+            sessionData.company.wait_time_disclaimer ??
+              DEFAULT_WAIT_TIME_DISCLAIMER
+          );
+          setEnvironmentType(
+            normalizeCompanyEnvironment(sessionData.company.environment_type)
+          );
+          setPassword("");
+          setIsUnlocked(true);
+          await loadDoctors();
         }
       } catch {
         setMessageType("error");
@@ -249,8 +235,7 @@ export default function CompanySettingsPage() {
         setEnvironmentType(
           normalizeCompanyEnvironment(data.company.environment_type)
         );
-        saveAdminPassword(slug, password.trim());
-        setPassword(password.trim());
+        setPassword("");
         setIsUnlocked(true);
         await loadDoctors();
       } else {
@@ -265,8 +250,8 @@ export default function CompanySettingsPage() {
     }
   }
 
-  function logoutAdmin() {
-    clearAdminPassword(slug);
+  async function logoutAdmin() {
+    await logoutAdminSession(slug);
     setIsUnlocked(false);
     setPassword("");
     setDoctors([]);
@@ -276,14 +261,6 @@ export default function CompanySettingsPage() {
 
   async function saveSettings() {
     setMessage("");
-
-    if (!password.trim()) {
-      setMessageType("error");
-      setMessage("Bitte melde dich erneut an.");
-      setIsUnlocked(false);
-      clearAdminPassword(slug);
-      return;
-    }
 
     if (hasEmptyDoctorName) {
       setMessageType("error");
@@ -313,7 +290,6 @@ export default function CompanySettingsPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          password: password.trim(),
           address,
           postal_code: postalCode,
           city,
@@ -337,7 +313,6 @@ export default function CompanySettingsPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          password: password.trim(),
           doctors: doctors.map((doctor) => {
             const treatmentTimeMin = Number(doctor.treatmentTimeMin);
             const treatmentTimeMax =
@@ -375,7 +350,6 @@ export default function CompanySettingsPage() {
         normalizeCompanyEnvironment(companyData.company.environment_type)
       );
       setDoctors((doctorsData.doctors ?? []).map(mapDoctorRow));
-      saveAdminPassword(slug, password.trim());
       setMessageType("success");
       setMessage("Einstellungen gespeichert.");
     } catch {
