@@ -230,12 +230,6 @@ const generalSections: Section[] = [
       "An die Stelle der unwirksamen Bestimmung treten die gesetzlichen Vorschriften.",
     ],
   },
-  {
-    title: "Hinweis",
-    content: [
-      "Diese Nutzungsbedingungen sind ein Muster für KurzWarten und müssen vor einem produktiven kommerziellen Einsatz mit den tatsächlichen technischen, wirtschaftlichen und rechtlichen Gegebenheiten abgeglichen werden. Sie ersetzen keine individuelle rechtliche Prüfung.",
-    ],
-  },
 ];
 
 const variantMeta = {
@@ -244,7 +238,8 @@ const variantMeta = {
     label: "Für Geschäftskunden",
     title: "Nutzungsbedingungen für Geschäftskunden",
     lead: "Teil A für Unternehmen, Praxen, Einrichtungen und sonstige Organisationen, die KurzWarten selbst einsetzen.",
-    primaryHeading: "Teil A: Bedingungen für Geschäftskunden, Unternehmen und Einrichtungen",
+    primaryHeading:
+      "Teil A: Bedingungen für Geschäftskunden, Unternehmen und Einrichtungen",
     primarySections: businessSections,
   },
   endnutzer: {
@@ -303,11 +298,7 @@ function SectionBlock({
   );
 }
 
-export function NutzungsbedingungenContent({
-  variant,
-}: {
-  variant: Variant;
-}) {
+export function NutzungsbedingungenContent({ variant }: { variant: Variant }) {
   const meta = variantMeta[variant];
 
   return (
