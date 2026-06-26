@@ -85,7 +85,8 @@ const businessSections: Section[] = [
   {
     title: "Pflichten des Geschäftskunden",
     content: [
-      "Der Geschäftskunde darf KurzWarten nur rechtmäßig und bestimmungsgemäß nutzen. Untersagt ist insbesondere die missbräuchliche Nutzung der Anwendung, die Eingabe rechtswidriger Inhalte, die Verarbeitung unnötiger sensibler Daten, die Weitergabe von Zugangsdaten an unbefugte Personen, der Versuch, technische Schutzmaßnahmen zu umgehen, sowie jede Nutzung, die den Betrieb von KurzWarten oder die Rechte anderer Personen beeinträchtigt.",
+      "Der Geschäftskunde darf KurzWarten nur rechtmäßig und bestimmungsgemäß nutzen. Der Geschäftskunde und dessen Mitarbeiter sind dafür verantwortlich, Tickets korrekt und nur im erforderlichen Umfang zu erstellen.",
+      "Untersagt ist insbesondere das Erstellen falscher, unnötiger oder massenhafter Tickets, die Eingabe unzulässiger oder sensibler Daten, die Weitergabe von Zugangsdaten an unbefugte Personen, der Versuch, technische Schutzmaßnahmen zu umgehen, sowie jede Nutzung, die den Betrieb von KurzWarten, die Rechte wartender Personen oder die ordnungsgemäße Verwaltung der Warteschlange beeinträchtigt.",
       "Der Geschäftskunde darf KurzWarten nicht ohne ausdrückliche Zustimmung des Anbieters weiterverkaufen, unterlizenzieren, als eigenes Produkt anbieten oder Dritten als White-Label-Lösung zur Verfügung stellen.",
     ],
   },
@@ -154,8 +155,10 @@ const enduserSections: Section[] = [
     title: "Verhalten der Endnutzer",
     content: [
       "Wartende Personen dürfen KurzWarten nur rechtmäßig und bestimmungsgemäß verwenden.",
-      "Untersagt ist insbesondere das Erstellen falscher oder massenhafter Tickets, die Manipulation fremder Tickets, der Versuch, technische Schutzmaßnahmen zu umgehen, der unbefugte Zugriff auf Adminbereiche, die Eingabe beleidigender, rechtswidriger oder sensibler Inhalte sowie jede Nutzung, die den Betrieb der Anwendung oder die Rechte anderer Personen beeinträchtigt.",
-      "Bei missbräuchlicher Nutzung können Tickets gelöscht, Funktionen eingeschränkt oder weitere geeignete Maßnahmen ergriffen werden.",
+      "Wenn Tickets ausschließlich durch das Unternehmen, die Einrichtung oder deren Mitarbeiter erstellt werden, dürfen wartende Personen KurzWarten insbesondere dazu nutzen, ihre Ticketnummer einzusehen, den aktuellen Status ihres Tickets aufzurufen oder Informationen zur Warteschlange abzurufen.",
+      "Untersagt ist insbesondere die Manipulation fremder Tickets, der Versuch, technische Schutzmaßnahmen zu umgehen, der unbefugte Zugriff auf Adminbereiche, die Nutzung fremder Ticketnummern, die Störung des Betriebs der Anwendung sowie jede Nutzung, die Rechte anderer Personen beeinträchtigt oder den ordnungsgemäßen Ablauf der Warteschlange stört.",
+      "Wartende Personen dürfen keine beleidigenden, rechtswidrigen oder sensiblen Inhalte eingeben, sofern Eingabefelder zur Verfügung stehen. Sensible Informationen wie Diagnosen, Beschwerden, Behandlungsgründe oder andere vertrauliche Angaben dürfen nicht über KurzWarten eingegeben werden.",
+      "Bei missbräuchlicher Nutzung können Tickets gelöscht, Funktionen eingeschränkt oder weitere geeignete Maßnahmen ergriffen werden. Bei Problemen mit einem Ticket sollten sich wartende Personen an das Personal des jeweiligen Unternehmens oder der jeweiligen Einrichtung wenden.",
     ],
   },
   {
