@@ -1,6 +1,7 @@
 "use client";
 
 import QRCode from "qrcode";
+import Link from "next/link";
 import {
   getCurrentAdminSession,
   logoutAdminSession,
@@ -894,30 +895,30 @@ export default function CompanyAdminPage() {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <a
+            <Link
               href={`/warten/${slug}`}
               className="rounded-lg border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-sm"
             >
               Kundenseite öffnen
-            </a>
-            <a
+            </Link>
+            <Link
               href={`/display/${slug}`}
               className="rounded-lg border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-sm"
             >
               Display öffnen
-            </a>
-            <a
+            </Link>
+            <Link
               href={`/admin/${slug}/settings`}
               className="rounded-lg border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-sm"
             >
               Einstellungen
-            </a>
-            <a
+            </Link>
+            <Link
               href={`/admin/${slug}/history`}
               className="rounded-lg border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-sm"
             >
               History
-            </a>
+            </Link>
             <button
               onClick={logoutAdmin}
               className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 font-semibold text-red-700 transition hover:-translate-y-0.5 hover:border-red-300 hover:bg-red-100 hover:shadow-sm"

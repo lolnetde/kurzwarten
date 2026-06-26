@@ -44,6 +44,22 @@ input:focus-visible {
   outline-offset: 3px;
 }
 
+.theme-toggle-sun {
+  display: none;
+}
+
+.theme-toggle-moon {
+  display: inline-flex;
+}
+
+.dark .theme-toggle-sun {
+  display: inline-flex;
+}
+
+.dark .theme-toggle-moon {
+  display: none;
+}
+
 .dark body {
   background: var(--background);
   color: var(--foreground);

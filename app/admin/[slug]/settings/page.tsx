@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   getCurrentAdminSession,
   logoutAdminSession,
@@ -443,12 +444,12 @@ export default function CompanySettingsPage() {
               )}
             </button>
 
-            <a
+            <Link
               href={`/admin/${slug}`}
               className="mt-3 block rounded-lg border border-slate-300 bg-white px-4 py-3 text-center font-semibold text-slate-800 hover:bg-slate-50"
             >
               Zurueck zum Dashboard
-            </a>
+            </Link>
 
             {message && (
               <p
@@ -472,12 +473,12 @@ export default function CompanySettingsPage() {
     <main className="min-h-[calc(100vh-73px)] bg-[#f5f7fb] text-slate-950">
       <section className="mx-auto max-w-4xl px-5 py-8">
         <div className="flex flex-wrap gap-3">
-          <a
+          <Link
             href={`/admin/${slug}`}
             className="rounded-lg border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-800 hover:bg-slate-50"
           >
             Zurueck zum Dashboard
-          </a>
+          </Link>
           <button
             onClick={logoutAdmin}
             className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 font-semibold text-red-700 hover:bg-red-100"

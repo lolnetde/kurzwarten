@@ -429,19 +429,19 @@ export default function AdminOverviewPage() {
               </h3>
 
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <a
+                <Link
                   href={`/warten/${createdCompany.slug}`}
                   className="rounded-lg bg-slate-950 px-4 py-3 text-center font-semibold text-white hover:bg-slate-800"
                 >
                   Kundenseite
-                </a>
+                </Link>
 
-                <a
+                <Link
                   href={`/admin/${createdCompany.slug}`}
                   className="rounded-lg border border-slate-300 bg-white px-4 py-3 text-center font-semibold text-slate-950 hover:bg-slate-50"
                 >
                   Adminbereich
-                </a>
+                </Link>
               </div>
             </div>
           )}

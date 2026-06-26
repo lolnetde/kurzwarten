@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   getCurrentAdminSession,
   logoutAdminSession,
@@ -10,7 +11,11 @@ import {
   setCachedAdminCompany,
   setCachedAdminHistory,
 } from "@/lib/admin-portal-cache";
-import { ButtonSpinner, HistorySkeleton, PanelSkeleton } from "@/components/LoadingStates";
+import {
+  ButtonSpinner,
+  HistorySkeleton,
+  PanelSkeleton,
+} from "@/components/LoadingStates";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
@@ -54,39 +59,38 @@ export default function CompanyHistoryPage() {
       done: result.done + day.done,
       deleted: result.deleted + day.deleted,
     }),
-    { total: 0, called: 0, done: 0, deleted: 0 }
+    { total: 0, called: 0, done: 0, deleted: 0 },
   );
 
-  const loadHistory = useCallback(
-    async () => {
-      setIsLoadingHistory(true);
+  const loadHistory = useCallback(async () => {
+    setIsLoadingHistory(true);
 
-      try {
-        const response = await fetch(`/api/company/${slug}/history`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({}),
-        });
-        const data = await response.json();
+    try {
+      const response = await fetch(`/api/company/${slug}/history`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      });
+      const data = await response.json();
 
-        if (data.success) {
-          const loadedHistory = data.history ?? [];
-          setHistory(loadedHistory);
-          setCachedAdminHistory(slug, loadedHistory);
-          setMessage("");
-        } else {
-          setMessage(data.error ?? "Statistiken konnten nicht geladen werden.");
-        }
-      } catch {
-        setMessage("Verbindung fehlgeschlagen. Statistiken konnten nicht geladen werden.");
-      } finally {
-        setIsLoadingHistory(false);
+      if (data.success) {
+        const loadedHistory = data.history ?? [];
+        setHistory(loadedHistory);
+        setCachedAdminHistory(slug, loadedHistory);
+        setMessage("");
+      } else {
+        setMessage(data.error ?? "Statistiken konnten nicht geladen werden.");
       }
-    },
-    [slug]
-  );
+    } catch {
+      setMessage(
+        "Verbindung fehlgeschlagen. Statistiken konnten nicht geladen werden.",
+      );
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  }, [slug]);
 
   useEffect(() => {
     const timeout = window.setTimeout(async () => {
@@ -195,79 +199,79 @@ export default function CompanyHistoryPage() {
           {(isLoadingCompany || isCheckingSavedLogin) && !company ? (
             <PanelSkeleton />
           ) : (
-          <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-sm font-semibold text-blue-700">
-              {company?.name ?? "KurzWarten"}
-            </p>
-            <h1 className="mt-2 text-4xl font-bold leading-tight">
-              Statistiken oeffnen
-            </h1>
-            <p className="mt-4 text-lg leading-8 text-slate-600">
-              {isCheckingSavedLogin
-                ? "Gespeicherte Anmeldung wird geprueft."
-                : "Gib das Admin-Passwort ein, um die History zu sehen."}
-            </p>
+            <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+              <p className="text-sm font-semibold text-blue-700">
+                {company?.name ?? "KurzWarten"}
+              </p>
+              <h1 className="mt-2 text-4xl font-bold leading-tight">
+                Statistiken oeffnen
+              </h1>
+              <p className="mt-4 text-lg leading-8 text-slate-600">
+                {isCheckingSavedLogin
+                  ? "Gespeicherte Anmeldung wird geprueft."
+                  : "Gib das Admin-Passwort ein, um die History zu sehen."}
+              </p>
 
-            <label className="mt-7 block text-sm font-semibold text-slate-700">
-              Admin-Passwort
-            </label>
-            <input
-              value={password}
-              onChange={(event) => {
-                setPassword(event.target.value);
-                setMessage("");
-              }}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && password.trim()) {
-                  event.preventDefault();
-                  void unlockHistory();
+              <label className="mt-7 block text-sm font-semibold text-slate-700">
+                Admin-Passwort
+              </label>
+              <input
+                value={password}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  setMessage("");
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && password.trim()) {
+                    event.preventDefault();
+                    void unlockHistory();
+                  }
+                }}
+                className="mt-2 h-14 w-full rounded-lg border border-slate-300 bg-white px-4 text-lg text-slate-950"
+                disabled={
+                  isLoadingCompany ||
+                  isCheckingSavedLogin ||
+                  !company ||
+                  isUnlocking
                 }
-              }}
-              className="mt-2 h-14 w-full rounded-lg border border-slate-300 bg-white px-4 text-lg text-slate-950"
-              disabled={
-                isLoadingCompany ||
-                isCheckingSavedLogin ||
-                !company ||
-                isUnlocking
-              }
-              placeholder="Passwort"
-              type="password"
-            />
+                placeholder="Passwort"
+                type="password"
+              />
 
-            <button
-              onClick={unlockHistory}
-              disabled={
-                isLoadingCompany ||
-                isCheckingSavedLogin ||
-                !company ||
-                !password.trim() ||
-                isUnlocking
-              }
-              className="mt-5 h-14 w-full rounded-lg bg-blue-700 px-6 text-lg font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
-            >
-              {isLoadingCompany || isUnlocking || isCheckingSavedLogin ? (
-                <span className="inline-flex items-center justify-center gap-2">
-                  <ButtonSpinner />
-                  Wird geprüft...
-                </span>
-              ) : (
-                "Statistiken öffnen"
-              )}
-            </button>
+              <button
+                onClick={unlockHistory}
+                disabled={
+                  isLoadingCompany ||
+                  isCheckingSavedLogin ||
+                  !company ||
+                  !password.trim() ||
+                  isUnlocking
+                }
+                className="mt-5 h-14 w-full rounded-lg bg-blue-700 px-6 text-lg font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
+              >
+                {isLoadingCompany || isUnlocking || isCheckingSavedLogin ? (
+                  <span className="inline-flex items-center justify-center gap-2">
+                    <ButtonSpinner />
+                    Wird geprüft...
+                  </span>
+                ) : (
+                  "Statistiken öffnen"
+                )}
+              </button>
 
-            <a
+            <Link
               href={`/admin/${slug}`}
               className="mt-3 block rounded-lg border border-slate-300 bg-white px-4 py-3 text-center font-semibold text-slate-800 hover:bg-slate-50"
             >
               Zurueck zum Dashboard
-            </a>
+            </Link>
 
-            {message && (
-              <p className="mt-4 rounded-lg bg-red-50 p-3 font-semibold text-red-700">
-                {message}
-              </p>
-            )}
-          </div>
+              {message && (
+                <p className="mt-4 rounded-lg bg-red-50 p-3 font-semibold text-red-700">
+                  {message}
+                </p>
+              )}
+            </div>
           )}
         </section>
       </main>
@@ -282,22 +286,20 @@ export default function CompanyHistoryPage() {
             <p className="text-sm font-semibold text-blue-700">
               {company?.name ?? "Unternehmen"}
             </p>
-            <h1 className="mt-1 text-4xl font-bold leading-tight">
-              History
-            </h1>
+            <h1 className="mt-1 text-4xl font-bold leading-tight">History</h1>
             <p className="mt-2 text-slate-600">
-              Tagesuebersicht fuer erstellte, aufgerufene, erledigte und
-              geloeschte Tickets.
+              Tagesübersicht für erstellte, aufgerufene, erledigte und gelöschte
+              Tickets.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <a
+            <Link
               href={`/admin/${slug}`}
               className="rounded-lg border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-800 hover:bg-slate-50"
             >
               Dashboard
-            </a>
+            </Link>
             <button
               onClick={() => loadHistory()}
               disabled={isLoadingHistory}
@@ -335,7 +337,7 @@ export default function CompanyHistoryPage() {
             <p className="mt-1 text-3xl font-bold">{totals.done}</p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-sm font-semibold text-slate-500">Geloescht</p>
+            <p className="text-sm font-semibold text-slate-500">Gelöscht</p>
             <p className="mt-1 text-3xl font-bold">{totals.deleted}</p>
           </div>
         </div>
@@ -351,9 +353,7 @@ export default function CompanyHistoryPage() {
             <h2 className="text-xl font-bold">Tage</h2>
           </div>
 
-          {isLoadingHistory && (
-            <HistorySkeleton />
-          )}
+          {isLoadingHistory && <HistorySkeleton />}
 
           {!isLoadingHistory && history.length === 0 && (
             <p className="p-5 text-slate-600">
@@ -370,7 +370,7 @@ export default function CompanyHistoryPage() {
                     <th className="px-5 py-3 font-semibold">Tickets</th>
                     <th className="px-5 py-3 font-semibold">Aufgerufen</th>
                     <th className="px-5 py-3 font-semibold">Erledigt</th>
-                    <th className="px-5 py-3 font-semibold">Geloescht</th>
+                    <th className="px-5 py-3 font-semibold">Gelöscht</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">

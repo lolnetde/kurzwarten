@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 const STORAGE_KEY = "kurzwarten-theme";
+const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
 
 type Theme = "light" | "dark";
 
@@ -11,8 +12,17 @@ function applyTheme(theme: Theme) {
   document.documentElement.style.colorScheme = theme;
 }
 
-function getInitialTheme(): Theme {
-  if (typeof window === "undefined") return "light";
+function getInitialTheme(initialTheme: Theme): Theme {
+  if (typeof window === "undefined") return initialTheme;
+
+  const cookieTheme = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith(`${STORAGE_KEY}=`))
+    ?.split("=")[1];
+
+  if (cookieTheme === "light" || cookieTheme === "dark") {
+    return cookieTheme;
+  }
 
   const savedTheme = window.localStorage.getItem(STORAGE_KEY);
 
@@ -23,6 +33,11 @@ function getInitialTheme(): Theme {
   return window.matchMedia("(prefers-color-scheme: dark)").matches
     ? "dark"
     : "light";
+}
+
+function storeTheme(theme: Theme) {
+  window.localStorage.setItem(STORAGE_KEY, theme);
+  document.cookie = `${STORAGE_KEY}=${theme}; path=/; max-age=${COOKIE_MAX_AGE_SECONDS}; samesite=lax`;
 }
 
 function SunIcon() {
@@ -70,11 +85,16 @@ function MoonIcon() {
   );
 }
 
-export default function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>(() => getInitialTheme());
+export default function ThemeToggle({
+  initialTheme = "light",
+}: {
+  initialTheme?: Theme;
+}) {
+  const [theme, setTheme] = useState<Theme>(() => getInitialTheme(initialTheme));
 
   useEffect(() => {
     applyTheme(theme);
+    storeTheme(theme);
   }, [theme]);
 
   function toggleTheme() {
@@ -82,21 +102,24 @@ export default function ThemeToggle() {
 
     setTheme(nextTheme);
     applyTheme(nextTheme);
-    window.localStorage.setItem(STORAGE_KEY, nextTheme);
+    storeTheme(nextTheme);
   }
-
-  const isDark = theme === "dark";
 
   return (
     <button
       type="button"
       onClick={toggleTheme}
       className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition hover:-translate-y-0.5 hover:bg-slate-50 hover:text-blue-700 hover:shadow-sm"
-      aria-label={isDark ? "Hellen Modus aktivieren" : "Dunklen Modus aktivieren"}
-      title={isDark ? "Heller Modus" : "Dunkler Modus"}
+      aria-label="Darstellung wechseln"
+      title="Darstellung wechseln"
       suppressHydrationWarning
     >
-      {isDark ? <SunIcon /> : <MoonIcon />}
+      <span className="theme-toggle-sun">
+        <SunIcon />
+      </span>
+      <span className="theme-toggle-moon">
+        <MoonIcon />
+      </span>
     </button>
   );
 }

@@ -2,7 +2,13 @@ import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
 import ThemeToggle from "@/components/ThemeToggle";
 
-export default function Navbar() {
+type Theme = "light" | "dark";
+
+export default function Navbar({
+  initialTheme = "light",
+}: {
+  initialTheme?: Theme;
+}) {
   return (
     <nav className="border-b border-slate-200 bg-white text-slate-900">
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
@@ -15,7 +21,7 @@ export default function Navbar() {
         </Link>
 
         <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
-          <ThemeToggle />
+          <ThemeToggle initialTheme={initialTheme} />
 
           <Link
             href="/home"
